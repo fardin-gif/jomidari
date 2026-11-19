@@ -9,7 +9,7 @@ var setup={n:1,bots:['majumdar'],diff:{new:'easy',ent:'med',zam:'hard'}[lsGet('j
 var JOINCODE=null;
 var bidVal='',tradeDraft=null,lastRoll=null,armed=null,disp=null,moveTo=[],moving=[],anim=false,diceBusy=false,diceUntil=0,dicePrev=[1,1],cardN=null,cardUntil=0,cardFresh=false,seenLvl={};
 var lastChange=Date.now(),autoUid=null,sayShown=0,sayUntil=0;
-var AUTO_MS=90000;
+var AUTO_MS=90000,PRES=[],hbTimer=null,cheerSeen={};
 
 function arm(key,fn,msg){if(armed===key){armed=null;fn();}else{armed=key;toast(msg);setTimeout(function(){if(armed===key)armed=null;},4000);}}
 function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -31,5 +31,5 @@ function viewer(){
   if(MODE==='local'){if(!S.players[S.cur].bot)return S.cur;var h=humanIdxs();return h.length?h[0]:-1;}
   return myIdx();
 }
-function levelName(l){return {new:'🌱 প্রথমবার ক্রেতা',ent:'💼 উদ্যোক্তা',zam:'👑 জমিদার'}[l]||'';}
+function levelName(l){return {new:'প্রথমবার ক্রেতা',ent:'উদ্যোক্তা',zam:'জমিদার'}[l]||'';}
 function shareLink(code){return location.origin+location.pathname.replace(/\/r\/[^/]*$/,'/').replace(/index\.html$/,'')+'?r='+code;}
