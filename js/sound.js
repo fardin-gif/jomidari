@@ -33,6 +33,7 @@ var SFX={
   turn:function(){osc('sine',880,0,.2,.2);osc('sine',1175,.13,.32,.2);},
   doubles:function(){osc('triangle',660,0,.1,.25);osc('triangle',880,.1,.2,.25);},
   mono:function(){[784,988,1175,1568].forEach(function(f,i){bell(f,i*.1,.6,.18);});},
+  cheer:function(){for(var k=0;k<7;k++)nz(k*.06,.05,'bandpass',1800+k*120,.35);bell(1568,.3,.5,.12);},
   win:function(){var n=[[523,.14],[523,.14],[523,.14],[659,.36],[523,.18],[659,.18],[784,.9]],t=0;n.forEach(function(x){osc('square',x[0],t,x[1]+.05,.09);osc('triangle',x[0]*2,t,x[1]+.05,.12);t+=x[1];});bell(1568,t-.3,1.2,.2);},
   bankrupt:function(){var n=[[311,.4],[294,.4],[277,.4],[233,1]],t=0;n.forEach(function(x,i){osc('sawtooth',x[0],t,x[1],.09,i===3?x[0]*.8:x[0]*.97);t+=x[1];});}
 };
