@@ -99,7 +99,7 @@ function playEvent(e){
     case 'unsold':SFX.unsold();break;
     case 'jail':SFX.jail();addFx({kind:'jail',lbl:'🚔 জেলে!',dur:2400});break;
     case 'free':SFX.free();addFx({kind:'jail',out:true,lbl:'🔓 মুক্ত!',dur:1300});break;
-    case 'buy':SFX.buy();flashCell(e.idx,P(e.i)&&P(e.i).color);{var c=cellXY(e.idx);floatAt(c[0],c[1]-2,'🏷️ '+pname(e.i),'n');}break;
+    case 'buy':SFX.buy();flashCell(e.idx,P(e.i)&&P(e.i).color);{var c=cellXY(e.idx);floatAt(c[0],c[1]-2,pname(e.i),'n');}break;
     case 'pay':{
       var mineFrom=isMe(e.from),mineTo=typeof e.to==='number'&&isMe(e.to)&&multiView();
       if(mineFrom)SFX.pay();else if(mineTo)SFX.get();else SFX.soft();
@@ -107,7 +107,7 @@ function playEvent(e){
       else flyCoins(cellXY(disp[e.from]),[50,50],6);
       break;}
     case 'go':SFX.go();flyCoins([88,92],cellXY(disp[e.i]),7);break;
-    case 'build':SFX.build();{var c2=cellXY(e.idx);floatAt(c2[0],c2[1]-2,e.lvl===5?'🏨 হোটেল!':'🔨 বাড়ি','n');}break;
+    case 'build':SFX.build();{var c2=cellXY(e.idx);floatAt(c2[0],c2[1]-2,e.lvl===5?'হোটেল!':'বাড়ি','n');}break;
     case 'turn':SFX.turn();if(multiView()&&isMe(e.i)&&!S.players[e.i].bot){banner('🎯','আপনার পালা!','','sm',1500);var ac2=document.querySelector('.card:nth-child(2)');if(ac2){ac2.classList.remove('myturn');void ac2.offsetWidth;ac2.classList.add('myturn');}}break;
     case 'doubles':SFX.doubles();banner('🎲','ডাবলস!','','sm',1300);break;
     case 'mono':SFX.mono();banner('🌟','পুরো রঙ!',GROUPS[e.g][1]+' গ্রুপ — '+pname(e.i),'mono',2500);break;
