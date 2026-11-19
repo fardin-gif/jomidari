@@ -1,0 +1,129 @@
+// ====== জমিদার — Firebase সংযোগ, ঘর, লিংক ======
+function push(){
+  if(MODE!=='online')return;
+  var snap=JSON.stringify(S),v=S.v;
+  WRITE=WRITE.then(function(){return DB.doc('games/'+CODE).update({s:snap,v:v});}).catch(function(e){
+    if(e&&(e.code==='permission-denied'||e.code==='invalid_argument'))toast('লেখার অনুমতি নেই — Firestore rules ঠিকমতো publish করা হয়েছে কি দেখুন।');
+    else toast('সংযোগে সমস্যা, আবার চেষ্টা করুন।');
+  });
+}
+function commit(ns){S=ns;bidVal='';lastChange=Date.now();render();push();}
+function dispatch(a){
+  if(!S)return;
+  if(anim){toast('একটু অপেক্ষা করুন…');return;}
+  var who=MODE==='local'?whoFor(S,a):myIdx();
+  var r=apply(S,who,a);
+  if(r.err){toast(r.err);return;}
+  autoUid=null;
+  commit(r.s);
+}
+window.A=function(type,extra){var a={type:type};if(extra)for(var k in extra)a[k]=extra[k];dispatch(a);};
+
+function humanEntry(name,av){return {name:name,av:av};}
+function startLocalBots(){
+  var nm=(NAME||'আপনি');
+  var list=[{name:nm,av:MYAV}];
+  setup.bots.forEach(function(k){list.push({name:BOTS[k].name,bot:k});});
+  MODE='local';S=newGame(list);S.diff=setup.diff;resetFx();scr='game';render();
+}
+function startLocalHot(names,avs){
+  MODE='local';S=newGame(names.map(function(n,i){return {name:n,av:avs[i]};}));S.diff='med';resetFx();scr='game';render();
+}
+function resetFx(){evV=null;evQ=[];FX=[];draining=false;cashShown=null;disp=null;lastRoll=null;cardN=null;moving=[];anim=false;diceBusy=false;seenLvl={};sayShown=0;sayUntil=0;autoUid=null;lastChange=Date.now();}
+
+async function initNet(){
+  var cfg=window.FIREBASE_CONFIG;
+  if(!cfg||!cfg.apiKey||/YOUR_/.test(cfg.apiKey)){dbMsg='অনলাইন মোড চালু করতে firebase-config.js ফাইলে আপনার Firebase কনফিগ বসান (README দেখুন)। এখন কম্পিউটারের সাথে বা একই ডিভাইসে খেলতে পারেন।';render();return;}
+  try{
+    var V='10.14.1',B='https://www.gstatic.com/firebasejs/'+V+'/';
+    var appM=await import(B+'firebase-app.js'),authM=await import(B+'firebase-auth.js'),fsM=await import(B+'firebase-firestore.js');
+    var fapp=appM.initializeApp(cfg),auth=authM.getAuth(fapp),fs=fsM.getFirestore(fapp);
+    var cred=await authM.signInAnonymously(auth);
+    UID=cred.user.uid;
+    var snapOf=function(s){return {exists:s.exists(),data:function(){return s.data();}};};
+    DB={
+      doc:function(path){var ref=fsM.doc(fs,path);return {
+        get:async function(){return snapOf(await fsM.getDoc(ref));},
+        set:function(d){return fsM.setDoc(ref,d);},
+        update:function(d){return fsM.updateDoc(ref,d);},
+        onSnapshot:function(n,e){return fsM.onSnapshot(ref,function(s){n(snapOf(s));},e);}};},
+      collection:function(path){var c=fsM.collection(fs,path);return {orderBy:function(f){return {onSnapshot:function(n,e){return fsM.onSnapshot(fsM.query(c,fsM.orderBy(f)),function(s){n({docs:s.docs.map(function(d){return {data:function(){return d.data();}};})});},e);}};}};}
+    };
+    dbReady=true;
+  }catch(e){console.error(e);DB=null;dbMsg='Firebase সংযোগ হয়নি ('+(e&&e.code?e.code:'নেটওয়ার্ক/কনফিগ')+')। Authentication-এ Anonymous চালু আছে কি এবং কনফিগ ঠিক আছে কি দেখুন।';}
+  // লিংক দিয়ে এলে সরাসরি যোগ দেওয়ার পাতা
+  if(JOINCODE&&DB){await prepareJoin(JOINCODE);}
+  render();
+}
+function genCode(){var c='ABCDEFGHJKMNPQRSTUVWXYZ23456789',r='';for(var i=0;i<4;i++)r+=c[Math.floor(Math.random()*c.length)];return r;}
+function readName(){var el=document.getElementById('nm');if(el){NAME=(el.value||'').trim();}NAME=NAME||'খেলোয়াড়';lsSet('jm_name',NAME);lsSet('jm_av',MYAV);return NAME;}
+
+async function createRoom(){
+  if(!DB||!UID){toast('অনলাইন সংযোগ এখনো প্রস্তুত নয়');return;}
+  readName();var code=genCode();
+  try{
+    await DB.doc('games/'+code).set({host:UID,started:false,created:Date.now(),bots:[],hostName:NAME});
+    await DB.doc('games/'+code+'/players/'+UID).set({name:NAME,av:MYAV,t:Date.now(),uid:UID});
+  }catch(e){toast('ঘর বানানো যায়নি — Firestore rules/সংযোগ পরীক্ষা করুন।');return;}
+  enterRoom(code);
+}
+// লিংকের ঘর আছে কি দেখে নেওয়া
+async function prepareJoin(code){
+  try{var snap=await DB.doc('games/'+code).get();roomExists=snap.exists?snap.data():false;}catch(e){roomExists=null;}
+  scr='join';
+}
+async function joinRoom(code){
+  if(!DB||!UID)return;
+  code=(code||'').trim().toUpperCase();readName();
+  if(code.length<3){toast('ঘরের কোড দিন');return;}
+  var snap;try{snap=await DB.doc('games/'+code).get();}catch(e){toast('সংযোগে সমস্যা');return;}
+  if(!snap.exists){toast('এই ঘর পাওয়া যায়নি — লিংকটি ঠিক আছে কি?');return;}
+  var d=snap.data();
+  if(!d.started){
+    try{await DB.doc('games/'+code+'/players/'+UID).set({name:NAME,av:MYAV,t:Date.now(),uid:UID});}
+    catch(e){toast('যোগ দেওয়া যায়নি — Firestore rules/সংযোগ পরীক্ষা করুন।');return;}
+  }
+  enterRoom(code);
+}
+function enterRoom(code){
+  MODE='online';CODE=code;lsSet('jm_code',code);unsubAll();started=false;S=null;resetFx();scr='lobby';lobbyPlayers=[];lobbyBots=[];
+  try{history.replaceState(null,'','?r='+code);}catch(e){}
+  render();
+  var tm=setTimeout(function(){toast('সংযোগ ধীর — একটু অপেক্ষা করুন…');},10000);
+  UNSUBS.push(DB.doc('games/'+code).onSnapshot(function(snap){
+    clearTimeout(tm);
+    if(!snap.exists){return;}
+    var d=snap.data();HOST=d.host;lobbyBots=d.bots||[];
+    if(d.started&&d.s){
+      var ns;try{ns=JSON.parse(d.s);}catch(e){return;}
+      if(!S||ns.v>S.v){S=ns;started=true;scr='game';lastChange=Date.now();render();}
+    }else{render();}
+  },function(){toast('ঘরের সঙ্গে সংযোগ কেটে গেছে');}));
+  UNSUBS.push(DB.collection('games/'+code+'/players').orderBy('t').onSnapshot(function(snap){
+    lobbyPlayers=snap.docs.map(function(d){return d.data();});
+    if(scr==='lobby')render();
+  },function(){}));
+}
+function unsubAll(){UNSUBS.forEach(function(f){try{f();}catch(e){}});UNSUBS=[];}
+async function addLobbyBot(key){
+  if(HOST!==UID)return;
+  var bots=lobbyBots.slice();
+  if(lobbyPlayers.length+bots.length>=6){toast('সর্বোচ্চ ৬ জন');return;}
+  if(bots.indexOf(key)>=0){toast('এই চরিত্র আগেই আছে');return;}
+  bots.push(key);
+  try{await DB.doc('games/'+CODE).update({bots:bots});}catch(e){toast('যোগ করা যায়নি');}
+}
+async function removeLobbyBot(key){
+  if(HOST!==UID)return;
+  try{await DB.doc('games/'+CODE).update({bots:lobbyBots.filter(function(k){return k!==key;})});}catch(e){}
+}
+async function startOnline(){
+  if(HOST!==UID)return;
+  var list=lobbyPlayers.slice(0,6).map(function(p){return {uid:p.uid,name:p.name,av:p.av};});
+  lobbyBots.slice(0,6-list.length).forEach(function(k){list.push({name:BOTS[k].name,bot:k});});
+  if(list.length<2){toast('কমপক্ষে ২ জন লাগবে — বন্ধুকে লিংক পাঠান বা কম্পিউটার চরিত্র যোগ করুন');return;}
+  var s=newGame(list);s.diff=setup.diff;
+  S=s;started=true;scr='game';resetFx();lastChange=Date.now();render();
+  try{await DB.doc('games/'+CODE).update({started:true,s:JSON.stringify(s),v:s.v,uids:list.filter(function(p){return p.uid;}).map(function(p){return p.uid;})});}catch(e){toast('শুরু করা যায়নি');}
+}
+function leaveRoom(){resetFx();unsubAll();S=null;MODE=null;CODE=null;started=false;scr='home';lobbyPlayers=[];lobbyBots=[];JOINCODE=null;try{history.replaceState(null,'',location.pathname.replace(/\/r\/[^/]*$/,'/'));}catch(e){}render();}
