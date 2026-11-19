@@ -1,0 +1,8 @@
+{
+  "firestore": { "rules": "firestore.rules" },
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "firestore.rules", "README.md", "vercel.json", "netlify.toml", ".htaccess", "src/**", "test/**", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "/r/**", "destination": "/index.html" }]
+  }
+}

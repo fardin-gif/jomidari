@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // One document per game room: games/{CODE}
+    match /games/{code} {
+      allow read: if request.auth != null;
+
+      // Only the creator can create the room, and they must be its host.
+      allow create: if request.auth != null
+                    && request.resource.data.host == request.auth.uid;
+
+      // Host can update (start the game); afterwards only seated players can update the state.
+      allow update: if request.auth != null
+                    && (resource.data.host == request.auth.uid
+                        || request.auth.uid in resource.data.get('uids', []))
+                    && request.resource.data.host == resource.data.host;
+
+      allow delete: if request.auth != null && resource.data.host == request.auth.uid;
+
+      // Lobby: each person writes only their own player entry.
+      match /players/{uid} {
+        allow read: if request.auth != null;
+        allow create, update, delete: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}
