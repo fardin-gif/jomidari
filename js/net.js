@@ -71,6 +71,7 @@ async function createRoom(){
 async function prepareJoin(code){
   try{var snap=await DB.doc('games/'+code).get();roomExists=snap.exists?snap.data():false;}catch(e){roomExists=null;}
   scr='join';
+  if(NAME&&roomExists){await joinRoom(code);}  // নাম মনে থাকলে সরাসরি ঢুকে পড়ুন
 }
 async function joinRoom(code){
   if(!DB||!UID)return;
@@ -99,12 +100,44 @@ function enterRoom(code){
       if(!S||ns.v>S.v){S=ns;started=true;scr='game';lastChange=Date.now();render();}
     }else{render();}
   },function(){toast('ঘরের সঙ্গে সংযোগ কেটে গেছে');}));
+  startPresence(code);
   UNSUBS.push(DB.collection('games/'+code+'/players').orderBy('t').onSnapshot(function(snap){
     lobbyPlayers=snap.docs.map(function(d){return d.data();});
     if(scr==='lobby')render();
   },function(){}));
 }
-function unsubAll(){UNSUBS.forEach(function(f){try{f();}catch(e){}});UNSUBS=[];}
+// ---- উপস্থিতি ও উৎসাহ ----
+function startPresence(code){
+  PRES=[];var pp='games/'+code+'/presence/'+UID;
+  DB.doc(pp).set({uid:UID,name:NAME,av:MYAV,t:Date.now(),seen:Date.now()}).catch(function(){});
+  clearInterval(hbTimer);hbTimer=setInterval(function(){DB.doc(pp).update({seen:Date.now(),name:NAME,av:MYAV}).catch(function(){});updatePres();},25000);
+  UNSUBS.push(DB.collection('games/'+code+'/presence').orderBy('t').onSnapshot(function(snap){PRES=snap.docs.map(function(d){return d.data();});updatePres();},function(){}));
+  var first=true;cheerSeen={};
+  UNSUBS.push(DB.collection('games/'+code+'/cheers').orderBy('t').onSnapshot(function(snap){
+    snap.docs.forEach(function(d){var c=d.data();if(cheerSeen[c.uid]===c.t)return;cheerSeen[c.uid]=c.t;if(!first)showCheer(c);});
+    first=false;
+  },function(){}));
+}
+function updatePres(){var el=document.getElementById('presbox');if(el)el.innerHTML=presHTML();}
+var CHEER_LINES=['জয় হোক!','দারুণ খেলছেন!','চালিয়ে যান!','সাবাশ!','ভাগ্য আপনার সাথে!','হেরে যাবেন না!','জমিদারি আপনারই!','একদম জমিয়ে দিন!'];
+var lastCheer=0;
+function sendCheer(i){
+  if(!S||!S.players[i])return;
+  if(Date.now()-lastCheer<1500){toast('একটু থেমে থেমে উৎসাহ দিন');return;}
+  lastCheer=Date.now();
+  var c={uid:UID||'local',t:Date.now(),to:i,toName:S.players[i].name,toAv:S.players[i].bot||S.players[i].av||'h1',from:NAME||'একজন দর্শক',fromAv:MYAV,line:CHEER_LINES[Math.floor(Math.random()*CHEER_LINES.length)]};
+  if(MODE==='online'&&DB){DB.doc('games/'+CODE+'/cheers/'+UID).set(c).catch(function(){toast('পাঠানো যায়নি');});showCheer(c);cheerSeen[UID]=c.t;}
+  else showCheer(c);
+}
+function showCheer(c){
+  var box=document.getElementById('cheers');if(!box)return;
+  var d=document.createElement('div');d.className='cheer';
+  d.innerHTML='<div class="cav">'+avatar(c.fromAv,40)+'</div><div><b>'+esc(c.from)+'</b> উৎসাহ দিলেন <b>'+esc(c.toName)+'</b>-কে<div class="cl">'+esc(c.line)+'</div></div><div class="cav">'+avatar(c.toAv,40)+'</div>';
+  box.appendChild(d);while(box.children.length>5)box.removeChild(box.firstChild);
+  try{SFX.cheer();confetti(26);}catch(e){}
+  setTimeout(function(){d.classList.add('out');setTimeout(function(){d.remove();},500);},6500);
+}
+function unsubAll(){clearInterval(hbTimer);UNSUBS.forEach(function(f){try{f();}catch(e){}});UNSUBS=[];}
 async function addLobbyBot(key){
   if(HOST!==UID)return;
   var bots=lobbyBots.slice();
@@ -126,4 +159,4 @@ async function startOnline(){
   S=s;started=true;scr='game';resetFx();lastChange=Date.now();render();
   try{await DB.doc('games/'+CODE).update({started:true,s:JSON.stringify(s),v:s.v,uids:list.filter(function(p){return p.uid;}).map(function(p){return p.uid;})});}catch(e){toast('শুরু করা যায়নি');}
 }
-function leaveRoom(){resetFx();unsubAll();S=null;MODE=null;CODE=null;started=false;scr='home';lobbyPlayers=[];lobbyBots=[];JOINCODE=null;try{history.replaceState(null,'',location.pathname.replace(/\/r\/[^/]*$/,'/'));}catch(e){}render();}
+function leaveRoom(){if(MODE==='online'&&DB&&CODE){try{DB.doc('games/'+CODE+'/presence/'+UID).update({seen:0}).catch(function(){});}catch(e){}}PRES=[];resetFx();unsubAll();S=null;MODE=null;CODE=null;started=false;scr='home';lobbyPlayers=[];lobbyBots=[];JOINCODE=null;try{history.replaceState(null,'',location.pathname.replace(/\/r\/[^/]*$/,'/'));}catch(e){}render();}
