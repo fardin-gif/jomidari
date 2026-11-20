@@ -314,3 +314,52 @@ details.acc .bd li{margin:3px 0}
 .cheer .cl{font-family:var(--fh);font-weight:800;color:var(--maroon);font-size:17px}
 .cheer.out{opacity:0;transform:translateX(40px)}
 @keyframes cheerin{from{transform:translateX(120%) scale(.7);opacity:0}to{transform:none;opacity:1}}
+
+/* ===== তিন কলাম বিন্যাস ===== */
+.wrap3{display:grid;grid-template-columns:minmax(250px,320px) minmax(0,720px) minmax(300px,380px);grid-template-areas:"L M R";gap:14px;padding:12px;max-width:1500px;margin:0 auto;align-items:start;justify-content:center}
+.colL{grid-area:L}.colM{grid-area:M}.colR{grid-area:R}
+@media(max-width:1180px){.wrap3{grid-template-columns:minmax(0,1fr) 340px;grid-template-areas:"M R" "L R"}}
+@media(max-width:900px){.wrap3{grid-template-columns:1fr;grid-template-areas:"M" "R" "L";padding:8px}}
+.pbtns{display:flex;flex-direction:column;gap:4px;flex:none}
+.cfx{margin-left:4px;display:inline-flex;gap:4px;align-items:center}
+.cpop{display:inline-block;font-size:20px;animation:cpop .7s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes cpop{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.5) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+.ccnt{font-size:12px;background:var(--gold);border:2px solid var(--ink);border-radius:12px;padding:0 7px;font-weight:700}
+.pl.cheered{animation:chglow 1s ease-out}
+@keyframes chglow{0%{background:#ffe27a;transform:scale(1.03)}100%{background:transparent;transform:none}}
+
+/* ===== আপনার পালা সংকেত ===== */
+body.myturn-on::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:30;box-shadow:inset 0 0 0 5px var(--gold),inset 0 0 70px 10px rgba(242,182,36,.6);animation:edgepulse 1.3s ease-in-out infinite}
+@keyframes edgepulse{0%,100%{opacity:.45}50%{opacity:1}}
+.card.yourturn{background:linear-gradient(135deg,#fff1a8,#ffd45c);border-color:var(--maroon);box-shadow:0 4px 0 var(--maroon),0 0 0 4px var(--gold),0 0 26px 6px rgba(242,182,36,.8);animation:cardglow 1.2s ease-in-out infinite}
+.card.yourturn h3{font-size:19px;color:var(--maroon)}
+@keyframes cardglow{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+.bn.turnme{background:linear-gradient(135deg,#fff1a8,#ffc533);border-color:var(--maroon)}
+@media(prefers-reduced-motion:reduce){body.myturn-on::after,.card.yourturn{animation:none}}
+
+/* ===== সময়সীমার ঘড়ি ===== */
+.clockbox{margin-bottom:10px}
+.clk{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 4px 0 var(--ink);padding:6px 16px}
+.clk .cl1{font-family:var(--fh);font-weight:700;font-size:14px;color:var(--mut)}
+.clk .cl2{font-family:var(--fh);font-weight:800;font-size:34px;line-height:1.1;color:var(--g2);letter-spacing:2px}
+.clk .cl3{font-size:13px;color:var(--mut);max-width:260px;text-align:right}
+.clk.wait .cl2{font-size:22px;color:var(--gold2)}
+.clk.run{background:#e7f8e6}
+.clk.low{background:#ffe3df;border-color:var(--warn);animation:lowpulse 1s ease-in-out infinite}
+.clk.low .cl2{color:var(--warn)}
+.clk.end{background:#fff1b8}.clk.end .cl2{color:var(--maroon)}
+.clk.off{padding:4px 14px}.clk.off .cl2{font-size:16px;letter-spacing:0;color:var(--ink)}
+@keyframes lowpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.limseg{flex-wrap:wrap}
+.limseg .limin{display:inline-flex;align-items:center;gap:6px;background:#fff;padding:0 10px;font-family:var(--fh);font-weight:600;border-left:2.5px solid var(--ink);border-right:2.5px solid var(--ink)}
+.limseg .limin.on{background:var(--gold)}
+.limseg .limin input{width:104px;padding:3px 8px;border-radius:8px;border-width:2px}
+.winov .bn .sc{margin-top:1cqw;font-size:2.7cqw;font-family:var(--fb);text-align:left}
+.winov .bn .sc div{display:flex;justify-content:space-between;gap:3cqw;padding:.2cqw 0;border-bottom:.2cqw dotted #0003}
+.winov .bn .sc .top1{font-weight:800;color:var(--maroon)}
+.winov .bn .sc small{display:block;font-size:2cqw;color:var(--mut);text-align:center;margin-top:.6cqw}
+.sc.inl div{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dotted var(--line);font-size:14px}
+.sc.inl .top1{font-weight:800;color:var(--maroon)}
+.sc.inl small{color:var(--mut);font-size:12px}
+@media(prefers-reduced-motion:reduce){.clk.low{animation:none}}
+.limseg>button:not(:last-child){border-right:2.5px solid var(--ink)}
