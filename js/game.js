@@ -44,7 +44,7 @@ function renderGame(){
     (canRoll?'<div class="hint"> ছক্কায় ক্লিক করুন</div>':'')+
     '<div class="msg">'+esc(phaseMsg())+'</div>'+sayHTML+cardHTML+fxLayerHTML()[0]+'</div>';
   var scrollY=window.scrollY;
-  app.innerHTML=topbar()+'<div class="wrap3"><div class="colL">'+panelLeft()+'</div><div class="colM">'+clockBox()+'<div class="board">'+cells+center+'<div class="tkl">'+tokensHTML()+'</div>'+fxLayerHTML()[1]+winOverlay()+'</div></div><div class="colR">'+panelRight()+'</div></div>';
+  app.innerHTML=topbar()+'<div class="wrap3"><div class="colL">'+panelLeft()+'</div><div class="colM">'+clockBox()+'<div class="board">'+cells+center+'<div class="tkl">'+tokensHTML()+'</div>'+fxLayerHTML()[1]+winOverlay()+'</div>'+rollBar()+'</div><div class="colR">'+panelRight()+'</div></div>';
   if(rolled)startDice(S.dice);
   afterRender();applyHL();
   drain();
@@ -54,10 +54,20 @@ function renderGame(){
 }
 
 // ---------- ডান পাশের প্যানেল ----------
+// বোর্ডের নিচে স্থির জায়গায় ছক্কা বাটন — অন্য কাজের বাটনের সাথে কখনও জায়গা বদলায় না
+function rollBar(){
+  if(!S||S.phase==='over')return '';
+  var p=S.players[S.cur],ok=!HOLD&&S.phase==='roll'&&isMe(S.cur)&&!(MODE==='online'&&myIdx()<0);
+  if(!ok)return '<div class="rollbar idle"><span class="mut">'+(S.phase==='roll'&&!HOLD?esc(p.name)+(p.bot?' ভাবছে…':'-এর দান চলছে…'):'চাল চলছে…')+'</span></div>';
+  if(p.inJail)return '<div class="rollbar on"><button data-a="jailRoll" onclick="A(\'jailRoll\')">ডাবলসের চেষ্টা</button><button class="alt" data-a="payJail" onclick="A(\'payJail\')" '+(p.cash<50?'disabled':'')+'>৫০ টাকা দিয়ে বের হন</button>'+(p.fc.length?'<button class="alt" data-a="useCard" onclick="A(\'useCard\')">মুক্তির কার্ড</button>':'')+'<span class="mut">চেষ্টা '+bn(p.jt)+'/৩</span></div>';
+  return '<div class="rollbar on"><button class="big gold" data-a="roll" onclick="G.diceClick()">ছক্কা চালুন</button></div>';
+}
 function panelLeft(){
   var h=propsCard();
   var lg=S.log.slice(0,HOLD?logHold:S.log.length).slice(-16).reverse();
   h+='<div class="card"><h3>খেলার লগ</h3><div class="log2">'+lg.map(function(l){return '<div>'+esc(l)+'</div>';}).join('')+'</div><div class="mut" style="margin-top:4px">ব্যাংকে বাড়ি: '+bn(S.houses)+' • হোটেল: '+bn(S.hotels)+'</div></div>';
+  if(MODE==='online')h+='<div class="card" id="presbox">'+presHTML()+'</div>';
+  h+='<div class="card"><h3>সমর্থন কর্নার</h3><div id="cheerfeed" class="cheerfeed">'+cheerFeedHTML()+'</div></div>';
   return h;
 }
 function panelRight(){
@@ -70,15 +80,15 @@ function panelRight(){
     h+='<div class="pl'+(i===S.cur&&S.phase!=='over'?' cur':'')+(p.out?' out':'')+'" id="plr'+i+'"><div class="avw">'+avatarOf(p,46)+'<span class="dot" style="background:'+p.color+'"></span></div><div style="flex:1;min-width:0"><span class="nmx">'+esc(p.name)+'</span><span class="cfx" id="cf'+i+'">'+cheerFxHTML(i)+'</span>'+
       (p.bot?' <span class="mut">'+esc(BOTS[p.bot].title)+'</span>':'')+(MODE==='online'&&p.uid===UID?' <span class="mut">(আপনি)</span>':'')+(p.inJail?' 🔒':'')+(p.fc.length?' 🎫×'+p.fc.length:'')+
       '<div class="cash">'+money(cashV)+'</div><div class="chips">'+chips+'</div>'+talk+'</div>'+
-      '<div class="pbtns">'+(p.out?'':'<button class="sm gold" onclick="G.cheer('+i+')" title="'+esc(p.name)+'-কে সমর্থন দিন">সমর্থন</button>')+
+      '<div class="pbtns">'+(p.out||isSelf(i)?'':'<button class="sm gold" onclick="G.cheer('+i+')" title="'+esc(p.name)+'-কে সমর্থন দিন">সমর্থন</button>')+
       (MODE==='online'&&HOST===UID&&!p.out&&p.uid!==UID&&!p.bot&&S.phase!=='over'?'<button class="sm warn" onclick="G.kick('+i+')" title="অনুপস্থিত খেলোয়াড়কে বাদ দিন">বাদ</button>':'')+'</div></div>';
   });
   h+='</div>';
-  if(MODE==='online')h+='<div class="card" id="presbox">'+presHTML()+'</div>';
   return h;
 }
 function coachCard(){
   if(LEVEL!=='new'||!S||S.phase==='over'||HOLD)return '';
+  if(!(MODE==='local'&&S.players.some(function(q){return q.bot;})))return '';
   var me=myIdx();if(me<0)return '';
   if(!COACH)return '<div class="card" style="padding:6px 12px"><span class="mut"> সহায়ক বন্ধ আছে।</span> <button class="sm alt" onclick="G.coach()">চালু করুন</button></div>';
   var who=actorOf(S);if(who!==me)return '<div class="card coach"><div class="hd"><div style="font-size:30px">🌱</div><div><div class="tx">একটু অপেক্ষা করুন…</div><div class="mut">অন্যের দান চলছে। দেখুন কী হয় — আপনার পালায় আমি বলে দেব!</div></div><button class="sm alt off" onclick="G.coach()">বন্ধ</button></div></div>';
@@ -99,12 +109,11 @@ function actionCard(){
   if(HOLD&&s.phase!=='over')return h+'<div class="mut">ঘুঁটি চলছে… চাল শেষ হলে হিসাব দেখানো হবে।</div></div>';
   var spectator=(MODE==='online'&&myIdx()<0);
   if(spectator)return h+'<div class="mut"> আপনি দর্শক — খেলা দেখছেন।</div></div>';
-  if(s.phase==='over'){return h+'<b>🏆 '+esc(s.players[s.winner].name)+' জয়ী! অভিনন্দন!</b>'+(s.timeUp?'<div class="mut" style="margin-top:4px">সময় শেষ হয়েছে — মোট সম্পদে সেরা।</div>'+scoreHTML().replace('class="sc"','class="sc inl"'):'')+'<div class="acts"><button onclick="G.leave()">মেনুতে ফিরুন</button></div></div>';}
+  if(s.phase==='over'){return h+'<b>🏆 '+esc(s.players[s.winner].name)+' জয়ী! অভিনন্দন!</b>'+(s.timeUp?'<div class="mut" style="margin-top:4px">সময় শেষ হয়েছে — মোট সম্পদে সেরা।</div>'+scoreHTML().replace('class="sc"','class="sc inl"'):'')+'<div class="acts"><button onclick="G.leave()">Home-এ ফিরুন</button></div></div>';}
   var wait=function(t){return '<div class="mut">'+(p.bot?' ':'')+esc(t)+'</div>';};
   if(s.phase==='roll'){
     if(!mine)h+=wait(p.name+(p.bot?' ভাবছে…':'-এর দানের অপেক্ষা…'));
-    else if(p.inJail)h+='<div class="acts"><button data-a="jailRoll" onclick="A(\'jailRoll\')">ডাবলসের চেষ্টা</button><button class="alt" data-a="payJail" onclick="A(\'payJail\')" '+(p.cash<50?'disabled':'')+'>৫০ টাকা দিয়ে বের হন</button>'+(p.fc.length?'<button class="alt" data-a="useCard" onclick="A(\'useCard\')">মুক্তির কার্ড</button>':'')+'</div><div class="mut">চেষ্টা '+bn(p.jt)+'/৩</div>';
-    else h+='<div class="acts"><button data-a="roll" onclick="G.diceClick()">ছক্কা চালুন</button></div>';
+    else h+='<div class="mut">'+(p.inJail?'আপনি হাজতে — বোর্ডের নিচের বাটন থেকে বেছে নিন।':'বোর্ডের নিচের বড় বাটনে ছক্কা চালুন।')+'</div>';
   }else if(s.phase==='buy'){
     var q=SQ[p.pos];
     if(!mine)h+=wait(p.name+' সিদ্ধান্ত নিচ্ছে…');

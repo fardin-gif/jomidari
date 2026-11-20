@@ -21,10 +21,14 @@ function push(){
     else toast('সংযোগে সমস্যা, আবার চেষ্টা করুন।');
   });
 }
-function commit(ns){S=ns;bidVal='';lastChange=Date.now();render();push();}
+var guardT=0;
+function noteChange(o,x){if(!o||o.phase!==x.phase||o.cur!==x.cur||(o.auction&&x.auction&&o.auction.bid!==x.auction.bid)||(!!o.trade)!==(!!x.trade))guardT=Date.now();}
+var GUARDED={buy:1,auction:1,bid:1,pass:1,accept:1,decline:1,endTurn:1,payDebt:1};
+function commit(ns){noteChange(S,ns);S=ns;bidVal='';lastChange=Date.now();render();push();}
 function dispatch(a){
   if(!S)return;
   if(anim){toast('একটু অপেক্ষা করুন…');return;}
+  if(GUARDED[a.type]&&Date.now()-guardT<600){return;} // বোতাম বদলে যাওয়ার মুহূর্তে ভুল ক্লিক ঠেকাতে
   var who=MODE==='local'?whoFor(S,a):myIdx();
   var r=apply(S,who,a);
   if(r.err){toast(r.err);return;}
@@ -43,7 +47,7 @@ function startLocalBots(){
 function startLocalHot(names,avs){
   MODE='local';S=newGame(names.map(function(n,i){return {name:n,av:avs[i]};}));S.diff='med';S.limit=setup.limit;resetFx();scr='game';render();
 }
-function resetFx(){cleanFor=null;clearTimeout(cleanTimer);evV=null;evQ=[];FX=[];draining=false;cashShown=null;disp=null;lastRoll=null;cardN=null;moving=[];anim=false;diceBusy=false;seenLvl={};sayShown=0;sayUntil=0;autoUid=null;lastChange=Date.now();}
+function resetFx(){CHEERLOG=[];cleanFor=null;clearTimeout(cleanTimer);evV=null;evQ=[];FX=[];draining=false;cashShown=null;disp=null;lastRoll=null;cardN=null;moving=[];anim=false;diceBusy=false;seenLvl={};sayShown=0;sayUntil=0;autoUid=null;lastChange=Date.now();}
 
 async function initNet(){
   var cfg=window.FIREBASE_CONFIG;
@@ -112,7 +116,7 @@ function enterRoom(code){
     var d=snap.data();HOST=d.host;lobbyBots=d.bots||[];lobbyLimit=d.limit||0;
     if(d.started&&d.s){
       var ns;try{ns=JSON.parse(d.s);}catch(e){return;}
-      if(!S||ns.v>S.v){S=ns;started=true;scr='game';lastChange=Date.now();render();}
+      if(!S||ns.v>S.v){noteChange(S,ns);S=ns;started=true;scr='game';lastChange=Date.now();render();}
     }else{render();}
   },function(e){netErr(e,'ঘরের সঙ্গে সংযোগ কেটে গেছে');}));
   startPresence(code);
@@ -138,28 +142,37 @@ function cheerFxHTML(i){var on=Date.now()<(cheerUntil[i]||0),n=cheerCnt[i]||0;re
 function markCheer(i){
   cheerUntil[i]=Date.now()+3200;cheerCnt[i]=(cheerCnt[i]||0)+1;
   var upd=function(){var el=document.getElementById('cf'+i);if(el)el.innerHTML=cheerFxHTML(i);};
-  upd();var row=document.getElementById('plr'+i);if(row){row.classList.remove('cheered');void row.offsetWidth;row.classList.add('cheered');}
-  setTimeout(upd,3300);
+  upd();setTimeout(upd,3300);
 }
 function updatePres(){var el=document.getElementById('presbox');if(el)el.innerHTML=presHTML();}
 var CHEER_LINES=['জয় হোক!','দারুণ খেলছেন!','চালিয়ে যান!','সাবাশ!','ভাগ্য আপনার সাথে!','হেরে যাবেন না!','জমিদারি আপনারই!','একদম জমিয়ে দিন!'];
-var lastCheer=0;
+var lastCheer=0,CHEERLOG=[];
+// নিজেকে সমর্থন করা যাবে না (অনলাইনে নিজের uid, কম্পিউটার-মোডে মানুষ খেলোয়াড়)
+function isSelf(i){
+  var p=S&&S.players[i];if(!p)return false;
+  if(MODE==='online')return p.uid===UID;
+  if(MODE==='local'&&S.players.some(function(q){return q.bot;}))return !p.bot;
+  return false;
+}
+function cheerFeedHTML(){
+  if(!CHEERLOG.length)return '<div class="mut">এখনও কেউ সমর্থন পাঠায়নি। ডানদিকে খেলোয়াড়ের পাশের "সমর্থন" চাপুন।</div>';
+  return CHEERLOG.map(function(c){return '<div class="cfi"><span class="cav">'+avatar(c.fromAv,26)+'</span><span><b>'+esc(c.from)+'</b> → <b>'+esc(c.toName)+'</b> <span class="cl">'+esc(c.line)+'</span></span></div>';}).join('');
+}
 function sendCheer(i){
   if(!S||!S.players[i])return;
-  if(Date.now()-lastCheer<1500){toast('একটু থেমে থেমে উৎসাহ দিন');return;}
+  if(isSelf(i)){toast('নিজেকে সমর্থন করা যায় না — অন্যকে দিন');return;}
+  if(Date.now()-lastCheer<4000){toast('একটু থেমে আবার সমর্থন দিন');return;}
   lastCheer=Date.now();
   var c={uid:UID||'local',t:Date.now(),to:i,toName:S.players[i].name,toAv:S.players[i].bot||S.players[i].av||'h1',from:NAME||'একজন দর্শক',fromAv:MYAV,line:CHEER_LINES[Math.floor(Math.random()*CHEER_LINES.length)]};
-  if(MODE==='online'&&DB){DB.doc('games/'+CODE+'/cheers/'+UID).set(c).catch(function(){toast('পাঠানো যায়নি');});showCheer(c);cheerSeen[UID]=c.t;}
-  else showCheer(c);
+  if(MODE==='online'&&DB){DB.doc('games/'+CODE+'/cheers/'+UID).set(c).catch(function(){toast('পাঠানো যায়নি');});cheerSeen[UID]=c.t;}
+  showCheer(c,true);
 }
-function showCheer(c){
-  var box=document.getElementById('cheers');if(!box)return;
-  var d=document.createElement('div');d.className='cheer';
-  d.innerHTML='<div class="cav">'+avatar(c.fromAv,40)+'</div><div><b>'+esc(c.from)+'</b> উৎসাহ দিলেন <b>'+esc(c.toName)+'</b>-কে<div class="cl">'+esc(c.line)+'</div></div><div class="cav">'+avatar(c.toAv,40)+'</div>';
-  box.appendChild(d);while(box.children.length>5)box.removeChild(box.firstChild);
-  try{SFX.cheer();}catch(e){}
+function showCheer(c,mine){
+  if(!mine&&c.uid===UID)return;
+  CHEERLOG.unshift(c);if(CHEERLOG.length>12)CHEERLOG.pop();
+  var el=document.getElementById('cheerfeed');if(el)el.innerHTML=cheerFeedHTML();
+  if(!mine){try{SFX.cheer();}catch(e){}}
   markCheer(c.to);
-  setTimeout(function(){d.classList.add('out');setTimeout(function(){d.remove();},500);},6500);
 }
 // ---- খেলা শেষে ঘর পরিষ্কার (ফ্রি প্ল্যানের জায়গা ও কোটা বাঁচাতে) ----
 var cleanTimer=null,cleanFor=null;
@@ -182,7 +195,7 @@ function unsubAll(){clearInterval(hbTimer);UNSUBS.forEach(function(f){try{f();}c
 async function addLobbyBot(key){
   if(HOST!==UID)return;
   var bots=lobbyBots.slice();
-  if(lobbyPlayers.length+bots.length>=6){toast('সর্বোচ্চ ৬ জন');return;}
+  if(lobbyPlayers.length+bots.length>=8){toast('সর্বোচ্চ ৮ জন');return;}
   if(bots.indexOf(key)>=0){toast('এই চরিত্র আগেই আছে');return;}
   bots.push(key);
   try{await DB.doc('games/'+CODE).update({bots:bots});}catch(e){toast('যোগ করা যায়নি');}
@@ -193,7 +206,7 @@ async function removeLobbyBot(key){
 }
 async function startOnline(){
   if(HOST!==UID)return;
-  var list=lobbyPlayers.slice(0,6).map(function(p){return {uid:p.uid,name:p.name,av:p.av};});
+  var list=lobbyPlayers.slice(0,8).map(function(p){return {uid:p.uid,name:p.name,av:p.av};});
   lobbyBots.slice(0,6-list.length).forEach(function(k){list.push({name:BOTS[k].name,bot:k});});
   if(list.length<2){toast('কমপক্ষে ২ জন লাগবে — বন্ধুকে লিংক পাঠান বা কম্পিউটার চরিত্র যোগ করুন');return;}
   var s=newGame(list);s.diff=setup.diff;s.limit=setup.limit;

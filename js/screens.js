@@ -12,8 +12,8 @@ function topbar(){
   return '<div class="top"><div class="brand" onclick="G.home()">🏰 জমিদার</div><div class="row">'+
     (MODE==='online'&&CODE?'<span class="tag">ঘর: '+esc(CODE)+'</span>':(MODE==='local'&&scr==='game'?'<span class="tag">'+(setup.bots.length&&S&&S.players.some(function(p){return p.bot;})?'কম্পিউটারের সাথে':'একই ডিভাইস')+'</span>':''))+
     (LEVEL&&scr==='game'&&MODE==='local'?'<button class="sm alt" onclick="G.level()" title="স্তর বদলান">'+levelName(LEVEL)+'</button>':'')+
-    '<button class="sm alt" onclick="G.mute()" title="সাউন্ড">'+(muted?'🔇':'🔊')+'</button>'+
-    (inGame?'<button class="sm alt" onclick="G.leave()">মেনু</button>':'')+'</div></div>';
+    '<button class="sm alt" onclick="G.sound()" title="সাউন্ড সেটিং">'+(muted?'🔇':'🔊')+'</button>'+
+    (inGame?'<button class="sm alt" onclick="G.leave()">Home</button>':'')+'</div></div>';
 }
 function avPicker(){
   return '<div class="avgrid">'+HUMAN_AV.map(function(k){return '<button class="'+(k===MYAV?'on':'')+'" onclick="G.pickAv(\''+k+'\')" title="অবতার">'+avatar(k,52)+'</button>';}).join('')+'</div>';
@@ -48,7 +48,7 @@ function renderHome(){
     '</div>';
   h+='<div class="modes">'+
    '<div class="mode c1"><div class="ic">🧑‍🤝‍🧑</div><h3>বন্ধুদের সাথে অনলাইনে</h3><p>ঘর বানিয়ে লিংক পাঠান। যে যার ফোন/কম্পিউটারে খেলুন — কোড লাগবে না!</p>'+
-     (online?'<button class="big" onclick="G.create()">ঘর বানান </button>'+(saved?'<button class="alt sm" onclick="G.rejoin()">আগের ঘরে ফিরুন ('+esc(saved)+')</button>':''):'<div class="mut">'+esc(dbMsg||'অনলাইন সংযোগ প্রস্তুত হচ্ছে…')+'</div>')+'</div>'+
+     (online?'<button class="big" onclick="G.create()">ঘর বানান </button>'+(saved?'<button class="alt sm" onclick="G.rejoin()">আগের ঘরে ফিরুন ('+esc(saved)+')</button>':'')+'<div class="codejoin"><input id="jc" placeholder="ঘরের কোড" maxlength="8" onkeydown="if(event.key===\'Enter\')G.joinCode()"><button class="sm" onclick="G.joinCode()">যোগ দিন</button></div>':'<div class="mut">'+esc(dbMsg||'অনলাইন সংযোগ প্রস্তুত হচ্ছে…')+'</div>')+'</div>'+
    '<div class="mode c2"><div class="ic">🤖</div><h3>কম্পিউটারের সাথে</h3><p>মজুমদার সাহেব ও তাঁর বন্ধুদের হারাতে পারবেন? একাই খেলুন, যেকোনো সময়।</p><button class="big gold" onclick="G.vsCom()">খেলুন </button></div>'+
    '<div class="mode c3"><div class="ic">📱</div><h3>একই ডিভাইসে</h3><p>একটাই ফোন বা ল্যাপটপ — পালা করে খেলুন, পরিবারের সবাই মিলে।</p><button class="big alt" onclick="G.hot()">শুরু করুন</button></div>'+
   '</div>';
@@ -92,7 +92,7 @@ function limitText(m){return m>0?bn(m)+' মিনিট (সব সম্পত
 function renderSetup(){
   var h=topbar()+'<div class="wrapc" style="max-width:860px"><div class="card" style="margin-top:16px"><h2>কম্পিউটারের সাথে খেলুন</h2><p class="mut">স্তর, প্রতিপক্ষ ও কঠিনতা বেছে নিন।</p>';
   h+='<h3>১. আপনি কেমন খেলোয়াড়?</h3><p class="mut" style="margin:0 0 8px">প্রথমবার ক্রেতা বাছলে খেলার মাঝে প্রতিটি ধাপে পরামর্শ পাবেন।</p>'+levelCards(LEVEL,'G.setLevel2');
-  h+='<hr class="hr"><h3>২. প্রতিপক্ষ বাছুন <span class="mut">(১–৫ জন)</span></h3><div class="cpick">'+BOT_ORDER.map(function(k){var b=BOTS[k],on=setup.bots.indexOf(k)>=0;return '<div class="cp'+(on?' on':'')+(k==='majumdar'?' star':'')+'" onclick="G.togBot(\''+k+'\')">'+avatar(k,76)+'<b>'+b.name+'</b><small>'+b.title+'</small><small>'+b.blurb+'</small></div>';}).join('')+'</div>';
+  h+='<hr class="hr"><h3>২. প্রতিপক্ষ বাছুন <span class="mut">(১–৭ জন)</span></h3><div class="cpick">'+BOT_ORDER.map(function(k){var b=BOTS[k],on=setup.bots.indexOf(k)>=0;return '<div class="cp'+(on?' on':'')+(k==='majumdar'?' star':'')+'" onclick="G.togBot(\''+k+'\')">'+avatar(k,76)+'<b>'+b.name+'</b><small>'+b.title+'</small><small>'+b.blurb+'</small></div>';}).join('')+'</div>';
   h+='<hr class="hr"><h3>৩. কম্পিউটার কত চালাক?</h3><div class="seg">'+[['easy',' সহজ'],['med',' মাঝারি'],['hard',' কঠিন']].map(function(d){return '<button class="'+(setup.diff===d[0]?'on':'')+'" onclick="G.setDiff(\''+d[0]+'\')">'+d[1]+'</button>';}).join('')+'</div>';
   h+='<hr class="hr"><h3>৪. খেলা কতক্ষণ চলবে?</h3>'+limitPicker();
   h+='<hr class="hr"><div class="row" style="justify-content:space-between"><div class="row">'+avatar(MYAV,44)+'<b>'+esc(NAME||'আপনি')+'</b><button class="sm alt" onclick="G.avModal()">অবতার</button></div><div class="acts" style="margin:0"><button class="alt" onclick="G.home()">ফিরে যান</button><button class="big gold" onclick="G.startCom()">খেলা শুরু </button></div></div></div></div>';
@@ -102,7 +102,7 @@ function renderSetup(){
 // ---------- একই ডিভাইস ----------
 var hotNames=[];
 function renderHot(){
-  var n=setup.hot,h=topbar()+'<div class="wrapc" style="max-width:640px"><div class="card" style="margin-top:16px"><h2>একই ডিভাইসে পালা করে</h2><div class="row" style="margin:10px 0">কতজন খেলবেন? <div class="seg">'+[2,3,4,5,6].map(function(k){return '<button class="'+(k===n?'on':'')+'" onclick="G.hotN('+k+')">'+bn(k)+'</button>';}).join('')+'</div></div><div id="locnames">';
+  var n=setup.hot,h=topbar()+'<div class="wrapc" style="max-width:640px"><div class="card" style="margin-top:16px"><h2>একই ডিভাইসে পালা করে</h2><div class="row" style="margin:10px 0">কতজন খেলবেন? <div class="seg">'+[2,3,4,5,6,7,8].map(function(k){return '<button class="'+(k===n?'on':'')+'" onclick="G.hotN('+k+')">'+bn(k)+'</button>';}).join('')+'</div></div><div id="locnames">';
   for(var i=0;i<n;i++)h+='<div class="row" style="margin:6px 0">'+avatar(HUMAN_AV[i],40)+'<input class="ln" maxlength="14" placeholder="খেলোয়াড় '+bn(i+1)+'" value="'+esc(hotNames[i]||'')+'" oninput="hotNames['+i+']=this.value"></div>';
   h+='</div><h3 style="margin-top:12px">খেলা কতক্ষণ চলবে?</h3>'+limitPicker()+'<div class="acts"><button class="alt" onclick="G.home()">ফিরে যান</button><button class="big gold" onclick="G.startHot()">খেলা শুরু </button></div></div></div>';
   app.innerHTML=h;
@@ -126,11 +126,11 @@ function renderJoin(){
 function renderLobby(){
   var host=HOST===UID,link=shareLink(CODE),cnt=lobbyPlayers.length+lobbyBots.length;
   var h=topbar()+'<div class="wrapc" style="max-width:700px"><div class="card" style="margin-top:16px"><h2>ঘর তৈরি! <span class="codebox">'+esc(CODE)+'</span></h2>'+
-  '<p>এই লিংকটি বন্ধুদের পাঠান — লিংকে ঢুকে নাম দিলেই তারা যোগ দিতে পারবে। কোড টাইপ করতে হবে না!</p>'+
+  '<p>এই লিংকটি বন্ধুদের পাঠান — লিংকে ঢুকে নাম দিলেই তারা যোগ দিতে পারবে। চাইলে কোডটি (<b>'+esc(CODE)+'</b>) বললেও হবে — হোম পেজে "কোড দিয়ে যোগ দিন"-এ লিখলেই ঢুকবে।</p>'+
   '<div class="linkbox"><code id="lnk">'+esc(link)+'</code><button class="sm" onclick="G.copy()">কপি</button>'+(navigator.share?'<button class="sm gold" onclick="G.share()">শেয়ার</button>':'')+'<a href="https://wa.me/?text='+encodeURIComponent('জমিদার খেলতে আসুন!  '+link)+'" target="_blank" rel="noopener"><button class="sm" style="background:#25d366">WhatsApp</button></a></div>'+
-  '<h3 style="margin-top:14px">খেলোয়াড় ('+bn(cnt)+'/৬)</h3>'+
-  lobbyPlayers.map(function(p,i){return '<div class="pl"><div class="avw">'+avatar(p.av||'h1',44)+'<span class="dot" style="background:'+COLORS[i%6]+'"></span></div><span class="nmx">'+esc(p.name)+'</span>'+(p.uid===HOST?' <span class="mut">(হোস্ট)</span>':'')+(p.uid===UID?' <span class="mut">(আপনি)</span>':'')+'</div>';}).join('')+
-  lobbyBots.map(function(k,j){var b=BOTS[k];return '<div class="pl"><div class="avw">'+avatar(k,44)+'<span class="dot" style="background:'+COLORS[(lobbyPlayers.length+j)%6]+'"></span></div><span class="nmx">'+b.name+'</span> <span class="mut">(কম্পিউটার)</span>'+(host?' <button class="sm warn" onclick="G.rmBot(\''+k+'\')">সরান</button>':'')+'</div>';}).join('');
+  '<h3 style="margin-top:14px">খেলোয়াড় ('+bn(cnt)+'/৮)</h3>'+
+  lobbyPlayers.map(function(p,i){return '<div class="pl"><div class="avw">'+avatar(p.av||'h1',44)+'<span class="dot" style="background:'+COLORS[i%8]+'"></span></div><span class="nmx">'+esc(p.name)+'</span>'+(p.uid===HOST?' <span class="mut">(হোস্ট)</span>':'')+(p.uid===UID?' <span class="mut">(আপনি)</span>':'')+'</div>';}).join('')+
+  lobbyBots.map(function(k,j){var b=BOTS[k];return '<div class="pl"><div class="avw">'+avatar(k,44)+'<span class="dot" style="background:'+COLORS[(lobbyPlayers.length+j)%8]+'"></span></div><span class="nmx">'+b.name+'</span> <span class="mut">(কম্পিউটার)</span>'+(host?' <button class="sm warn" onclick="G.rmBot(\''+k+'\')">সরান</button>':'')+'</div>';}).join('');
   if(host){
     h+='<hr class="hr"><h3>কম্পিউটার চরিত্র যোগ করুন <span class="mut">(ইচ্ছা হলে)</span></h3><div class="row">'+BOT_ORDER.filter(function(k){return lobbyBots.indexOf(k)<0;}).map(function(k){return '<button class="sm alt" onclick="G.addBot(\''+k+'\')">'+avatar(k,26)+' '+BOTS[k].name+'</button>';}).join('')+'</div>'+
     '<h3 style="margin-top:12px">কম্পিউটার কত চালাক?</h3><div class="seg">'+[['easy',' সহজ'],['med',' মাঝারি'],['hard',' কঠিন']].map(function(d){return '<button class="'+(setup.diff===d[0]?'on':'')+'" onclick="G.setDiff(\''+d[0]+'\')">'+d[1]+'</button>';}).join('')+'</div>';
@@ -157,4 +157,13 @@ function legalModal(k){
   var t=k==='p'?'গোপনীয়তা নীতি':'ব্যবহারের শর্ত';
   var b=k==='p'?'<ul><li>আমরা আপনার নাম/ইমেইল/ফোন নম্বর সংগ্রহ করি না। অনলাইন খেলায় Firebase-এর "নামহীন (anonymous) পরিচয়" ব্যবহার হয়।</li><li>আপনার দেওয়া খেলার নাম ও অবতার শুধু ওই ঘরের খেলোয়াড়দের দেখানোর জন্য সংরক্ষিত হয়।</li><li>আপনার ব্রাউজারে শুধু নাম, স্তর ও সাউন্ড-সেটিংস মনে রাখা হয়।</li><li>বিজ্ঞাপন বা ট্র্যাকিং কুকি ব্যবহার করা হয় না।</li></ul>':'<ul><li>জমিদার একটি বিনোদনমূলক খেলা; এখানে কোনো আসল টাকার লেনদেন নেই।</li><li>অন্যদের সাথে ভদ্র আচরণ করুন; অশালীন নাম ব্যবহার করবেন না।</li><li>খেলাটি "যেমন আছে তেমন" দেওয়া হয়; সার্ভার সাময়িক বন্ধ থাকতে পারে।</li></ul>';
   modalEl.innerHTML='<div class="modalbg" onclick="G.close()"><div class="modal" onclick="event.stopPropagation()"><h3>'+t+'</h3>'+b+'<div class="acts"><button onclick="G.close()">বন্ধ করুন</button></div></div></div>';
+}
+
+function soundModal(){
+  var pc=function(v){return Math.round(v*100);};
+  modalEl.innerHTML='<div class="modalbg" onclick="if(event.target===this)G.close()"><div class="modal" style="max-width:420px"><h2>সাউন্ড সেটিং</h2>'+
+  '<label class="srow">মোট আওয়াজ <input type="range" min="0" max="100" value="'+pc(VOL)+'" oninput="G.vol(this.value)"></label>'+
+  '<label class="srow">ছক্কা ও ঘুঁটির ধুপধাপ <input type="range" min="0" max="100" value="'+pc(DICEV)+'" oninput="G.dvol(this.value)"></label>'+
+  '<label class="srow">সমর্থনের টুংটাং <input type="checkbox" '+(CHEERSND?'checked':'')+' onchange="G.csnd(this.checked)"></label>'+
+  '<div class="acts"><button class="alt" onclick="G.mute();G.sound()">'+(muted?'সব শব্দ চালু করুন':'সব শব্দ বন্ধ করুন')+'</button><button onclick="G.close()">ঠিক আছে</button></div></div></div>';
 }

@@ -23,7 +23,11 @@ var BOTS={
   nazma:{name:'নাজমা খালা',title:'নিলামের রানি',reserve:80,bidK:1.35,build:.7,blurb:'নিলাম এলেই চোখ চকচক! দর হাঁকতে পারেন সবচেয়ে বেশি।',
     say:{roll:['দাও তো বাপু, পাশাটা!','আল্লাহ ভরসা!'],buy:['ও মা! কী সুন্দর জায়গা!'],bid:['আমি দিচ্ছি আরও বেশি!','নিলামে নাজমা খালাকে হারানো সহজ না!'],pass:['এইবার ছেড়ে দিলাম বাছা।'],build:['ঘর তুলব, নাতিপুতি থাকবে!'],pay:['এই নাও বাছা, ভাড়া।'],jail:['ওরে বাবা, হাজতে!'],win:['দেখলে তো, খালার বুদ্ধি!'],lose:['ভালোই খেললে, বাছা!']}}
 };
-var BOT_ORDER=['majumdar','rahima','fotik','kanai','nazma'];
+BOTS.shefali={name:'শেফালি বিবি',title:'গ্রামের হিসেবি গিন্নি',reserve:120,bidK:.95,build:.85,blurb:'ছোট ছোট জায়গা জমিয়ে ধীরে ধীরে বড় সংসার গড়েন।',
+  say:{roll:['আল্লাহর নাম নিয়ে দিলাম!','দেখি কপালে কী আছে।'],buy:['সংসারের জন্য একটু জমি!','ভালো জায়গা, নিয়ে নিলাম।'],bid:['আরেকটু বাড়াই তো!'],pass:['থাক বাপু, এত দাম না।'],build:['ঘর তুলছি, নিজের ঘর!'],pay:['এই নাও, ভাড়া।'],jail:['ওমা! হাজতে!'],win:['ধৈর্যের ফল মিষ্টি, দেখলে তো!'],lose:['আজ তোমার দিন, বাছা।']}};
+BOTS.tuhin={name:'তুহিন ভাই',title:'প্রযুক্তি-পাগল তরুণ',reserve:60,bidK:1.15,build:.6,blurb:'হিসেব কষে ঝুঁকি নেন; নিলামে হঠাৎ চাল দিয়ে চমকে দেন।',
+  say:{roll:['অ্যালগরিদম বলছে ভালো দান!','রোল করছি, অপেক্ষা করুন।'],buy:['ইনভেস্টমেন্ট করে ফেললাম!','দারুণ লোকেশন!'],bid:['বিড বাড়ালাম!','এই দামেও লাভ আছে।'],pass:['রিটার্ন কম, পাস।'],build:['আপগ্রেড টাইম!'],pay:['ফি দিলাম, ঠিক আছে।'],jail:['সার্ভার ডাউন!'],win:['গেম ওভার — আমি জিতলাম!'],lose:['আবার রিম্যাচ চাই!']}};
+var BOT_ORDER=['majumdar','rahima','fotik','kanai','nazma','shefali','tuhin'];
 var HUMAN_AV=['h1','h2','h3','h4','h5','h6','h7','h8'];
 
 // ---- অবতারের বিবরণ ----
@@ -33,6 +37,8 @@ var AVD={
   fotik:{bg:'#9be3ff',skin:'#e6b17e',cloth:'#2e7d32',hair:'#1c1c1c',hairStyle:'spiky',cap:'#ff7043',smile:'big'},
   kanai:{bg:'#c9e8b0',skin:'#d09a68',cloth:'#8d6e63',hair:'#555',hairStyle:'bald',glasses:'#6d4c41',mus:'#444',tilak:1,scarf:'#f5f0e1'},
   nazma:{bg:'#d7c2ff',skin:'#d9a273',cloth:'#6a1b9a',hair:'#bdbdbd',hairStyle:'bun',veil:'#e1bee7',glassesRound:'#7b1fa2',earring:'#ffd54f'},
+  shefali:{bg:'#ffe0b2',skin:'#cf9468',cloth:'#2e7d32',hair:'#3b2a20',hairStyle:'bun',bindi:'#c62828',earring:'#ffd54f',veil:'#ffccbc'},
+  tuhin:{bg:'#b3e5fc',skin:'#e0ac69',cloth:'#455a64',hair:'#222',hairStyle:'short',glasses:'#222',cap:'#1565c0'},
   h1:{bg:'#ffd6a5',skin:'#e8b88a',cloth:'#e63946',hair:'#2b1b17',hairStyle:'short'},
   h2:{bg:'#caffbf',skin:'#c68642',cloth:'#1d7bd8',hair:'#1c1c1c',hairStyle:'curly'},
   h3:{bg:'#bde0fe',skin:'#f1c27d',cloth:'#2a9d4a',hair:'#6b3d1e',hairStyle:'long'},

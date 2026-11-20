@@ -1,5 +1,5 @@
 // ====== জমিদার — গেম ইঞ্জিন (pure logic) ======
-var COLORS=['#e63946','#1d7bd8','#2a9d4a','#f4a300','#8e44ad','#00a8a8'];
+var COLORS=['#e63946','#1d7bd8','#2a9d4a','#f4a300','#8e44ad','#00a8a8','#ff6fb5','#5d4037'];
 var GROUPS={brown:['#8b5a3c','বাদামি'],lblue:['#8fd3f4','আকাশি'],pink:['#e66fb0','গোলাপি'],orange:['#f39a2b','কমলা'],red:['#d93636','লাল'],yellow:['#f3d52b','হলুদ'],green:['#2e9d4f','সবুজ'],dblue:['#2b4cb3','গাঢ় নীল']};
 var SQ=(function(){
   var P=function(n,g,p,h,r){return {t:'prop',n:n,g:g,p:p,h:h,r:r};};
