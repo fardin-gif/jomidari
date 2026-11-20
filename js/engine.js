@@ -89,7 +89,7 @@ function alive(s){var r=[];s.players.forEach(function(p,i){if(!p.out)r.push(i);}
 function newGame(list){
   var s={v:1,players:list.map(function(p,i){return {uid:p.uid||null,bot:p.bot||null,av:p.av||null,name:p.name,color:COLORS[i%COLORS.length],pos:0,cash:1500,inJail:false,jt:0,fc:[],out:false};}),
     own:{},cur:0,phase:'roll',dice:[0,0],dc:0,again:false,houses:32,hotels:12,log:[],debt:null,auction:null,trade:null,tradePrev:null,
-    ch:shuffle(CHD.map(function(_,i){return i;})),cc:shuffle(CCD.map(function(_,i){return i;})),winner:null,lastCard:null,dbl:false,rollId:0,ev:[],say:null};
+    ch:shuffle(CHD.map(function(_,i){return i;})),cc:shuffle(CCD.map(function(_,i){return i;})),winner:null,lastCard:null,dbl:false,rollId:0,ev:[],say:null,limit:0,endAt:0,timeUp:false,scores:null};
   // প্রথম দান: সবাই ছক্কা চালে, সর্বোচ্চ যোগফল শুরু করে
   var cand=s.players.map(function(_,i){return i;});
   while(cand.length>1){
@@ -222,6 +222,11 @@ function run(s,who,a){
   var T=a.type;
   var mgmt=(ph==='roll'||ph==='post'||ph==='debt');
   switch(T){
+  case 'timeUp':{
+    if(!s.endAt||Date.now()<s.endAt-800)return 'সময় এখনও শেষ হয়নি';
+    if(ph!=='roll')return 'এই দান শেষ হলে খেলা থামবে';
+    var sc=scoreList(s);s.scores=sc;s.timeUp=true;s.phase='over';s.winner=sc[0].i;s.debt=null;s.auction=null;s.trade=null;
+    glog(s,'সময় শেষ! সম্পদে সেরা: '+pl(s,sc[0].i).name+' (৳'+bn(sc[0].net)+')');ev(s,{k:'win',i:sc[0].i});break;}
   case 'roll':{
     if(who!==cur||ph!=='roll'||p.inJail)return 'এখন ছক্কা চালানো যাবে না';
     var d1=rnd(6)+1,d2=rnd(6)+1;s.dice=[d1,d2];s.rollId++;
@@ -361,10 +366,26 @@ function checkTrade(s,t){
   t.rp.forEach(function(i){var x=s.own[i];if(!x||x.o!==t.to)bad='তার নয় এমন জায়গা';else if(SQ[i].t==='prop'&&groupBuilt(s,SQ[i].g))bad='বাড়ি/হোটেল থাকা গ্রুপের জায়গা বিনিময় করা যায় না';});
   return bad;
 }
+// ---- সময়সীমা: সম্পদের হিসাব ও ঘড়ি ----
+function ownableCount(){return SQ.filter(function(q){return q.t==='prop'||q.t==='station'||q.t==='util';}).length;}
+function allSold(s){return Object.keys(s.own).length>=ownableCount();}
+function netWorth(s,i){
+  var n=s.players[i].cash;
+  Object.keys(s.own).forEach(function(k){var o=s.own[k];if(o.o!==i)return;var q=SQ[k];n+=(o.mort?q.p/2:q.p)+((q.h||0)*(o.lvl||0));});
+  return Math.round(n);
+}
+function scoreList(s){
+  return s.players.map(function(p,i){return {i:i,net:netWorth(s,i),cash:p.cash,out:!!p.out};}).filter(function(x){return !x.out;})
+    .sort(function(a,b){return (b.net-a.net)||(b.cash-a.cash);});
+}
 function apply(s0,who,a){
   var s=JSON.parse(JSON.stringify(s0)),err;s.ev=[];
   try{err=run(s,who,a);}catch(e){return {err:'ত্রুটি: '+e};}
   if(err)return {err:err};
+  if(s.limit>0&&!s.endAt&&s.phase!=='over'&&allSold(s)){
+    s.endAt=Date.now()+s.limit*60000;ev(s,{k:'clock',min:s.limit});
+    glog(s,'সব সম্পত্তি বিক্রি হয়েছে! এখন ঘড়ি চালু — '+bn(s.limit)+' মিনিট বাকি।');
+  }
   s.v=(s0.v||0)+1;
   return {s:s};
 }

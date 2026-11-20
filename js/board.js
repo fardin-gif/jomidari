@@ -108,14 +108,15 @@ function playEvent(e){
       break;}
     case 'go':SFX.go();flyCoins([88,92],cellXY(disp[e.i]),7);break;
     case 'build':SFX.build();{var c2=cellXY(e.idx);floatAt(c2[0],c2[1]-2,e.lvl===5?'হোটেল!':'বাড়ি','n');}break;
-    case 'turn':SFX.turn();if(multiView()&&isMe(e.i)&&!S.players[e.i].bot){banner('🎯','আপনার পালা!','','sm',1500);var ac2=document.querySelector('.card:nth-child(2)');if(ac2){ac2.classList.remove('myturn');void ac2.offsetWidth;ac2.classList.add('myturn');}}break;
+    case 'turn':if(!(multiView()&&isMe(e.i)))SFX.turn();break;
     case 'doubles':SFX.doubles();banner('🎲','ডাবলস!','','sm',1300);break;
     case 'mono':SFX.mono();banner('🌟','পুরো রঙ!',GROUPS[e.g][1]+' গ্রুপ — '+pname(e.i),'mono',2500);break;
+    case 'clock':SFX.clock();banner('','ঘড়ি চালু!','সব সম্পত্তি বিক্রি — '+bn(e.min)+' মিনিট বাকি','sm',2800);break;
     case 'bankrupt':SFX.bankrupt();banner('💥',pname(e.i)+' দেউলিয়া!','','bk',2600);break;
     case 'win':SFX.win();confetti(70);break;
   }
 }
-function evGap(e){return {sold:1200,jail:1500,free:900,win:1400,mono:900,bankrupt:1100,auctionStart:700,bid:150,turn:300,pay:600}[e.k]||600;}
+function evGap(e){return {sold:1200,jail:1500,free:900,win:1400,mono:900,clock:1500,bankrupt:1100,auctionStart:700,bid:150,turn:300,pay:600}[e.k]||600;}
 function drain(){
   if(anim)return;
   if(!evQ.length){cashFloats();return;}
@@ -124,11 +125,15 @@ function drain(){
   var e=evQ.shift();try{playEvent(e);}catch(x){console.error(x);}
   setTimeout(function(){draining=false;drain();},evGap(e));
 }
+function scoreHTML(){
+  if(!S.timeUp||!S.scores)return '';
+  return '<div class="sc">'+S.scores.map(function(x,r){return '<div'+(r===0?' class="top1"':'')+'><span>'+bn(r+1)+'. '+esc(pname(x.i))+'</span><b>'+money(x.net)+'</b></div>';}).join('')+'<small>মোট সম্পদ = নগদ + সম্পত্তি + বাড়ি-হোটেল</small></div>';
+}
 function winOverlay(){
   if(S.phase!=='over')return '';
   var cols=['#e63946','#1d7bd8','#2a9d4a','#f4a300','#8e44ad','#00a8a8','#ff6fb5'],c='';
   for(var i=0;i<45;i++)c+='<i class="cf loop" style="left:'+(Math.random()*100)+'%;background:'+cols[i%7]+';animation-delay:'+(Math.random()*2)+'s;animation-duration:'+(2+Math.random()*1.6)+'s"></i>';
-  return '<div class="winov">'+c+'<div class="bn"><div class="e">🏆</div><div class="t">'+esc(pname(S.winner))+' জয়ী!</div><div class="s">অভিনন্দন!</div></div></div>';
+  return '<div class="winov">'+c+'<div class="bn"><div class="e">🏆</div><div class="t">'+esc(pname(S.winner))+' জয়ী!</div><div class="s">'+(S.timeUp?'সময় শেষ — সম্পদে সবার সেরা':'অভিনন্দন!')+'</div>'+scoreHTML()+'</div></div>';
 }
 function sqHTML(i){
   var q=SQ[i],o=S.own[i],cls='sq'+(o&&o.mort?' mort':'');

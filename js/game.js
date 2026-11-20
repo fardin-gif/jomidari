@@ -1,6 +1,7 @@
 // ====== জমিদার — খেলার পর্দা, প্যানেল, সহায়ক, কম্পিউটারের চাল চালানো ======
 function pname(i){return S.players[i]?S.players[i].name:'';}
 function phaseMsg(){
+  if(HOLD&&S.phase!=='over')return 'ঘুঁটি এগোচ্ছে…';
   var p=S.players[S.cur];
   switch(S.phase){
     case 'roll':return p.inJail?p.name+' জেলে — কীভাবে বেরোবে?':p.name+'-এর দান: ছক্কা চালুন';
@@ -18,6 +19,9 @@ function renderGame(){
   if(lastRoll===null||S.rollId<lastRoll){lastRoll=S.rollId;dicePrev=S.dice[0]?S.dice.slice():[1,1];cardN=S.lastCard?S.lastCard.n:0;}
   var rolled=S.rollId!==lastRoll;
   if(rolled)lastRoll=S.rollId;
+  // ঘুঁটি/ছক্কা চলার সময় টাকা, লগ ও কাজ আগের অবস্থায় ধরে রাখি — চাল শেষ হলে হিসাব দেখাব
+  HOLD=anim||rolled||S.players.some(function(p,i){return !p.out&&disp[i]!==p.pos;});
+  if(!HOLD||!cashHold||cashHold.length!==S.players.length){cashHold=S.players.map(function(p){return p.cash;});logHold=S.log.length;}
   var faces=rolled?dicePrev:(S.dice[0]?S.dice:dicePrev);
   if(!rolled&&!diceBusy&&S.dice[0])dicePrev=S.dice.slice();
   if(evV===null||S.v<evV){evV=S.v;evQ=[];cashShown=S.players.map(function(p){return p.cash;});}
@@ -40,35 +44,40 @@ function renderGame(){
     (canRoll?'<div class="hint"> ছক্কায় ক্লিক করুন</div>':'')+
     '<div class="msg">'+esc(phaseMsg())+'</div>'+sayHTML+cardHTML+fxLayerHTML()[0]+'</div>';
   var scrollY=window.scrollY;
-  app.innerHTML=topbar()+'<div class="wrap"><div><div class="board">'+cells+center+'<div class="tkl">'+tokensHTML()+'</div>'+fxLayerHTML()[1]+winOverlay()+'</div></div><div>'+panel()+'</div></div>';
+  app.innerHTML=topbar()+'<div class="wrap3"><div class="colL">'+panelLeft()+'</div><div class="colM">'+clockBox()+'<div class="board">'+cells+center+'<div class="tkl">'+tokensHTML()+'</div>'+fxLayerHTML()[1]+winOverlay()+'</div></div><div class="colR">'+panelRight()+'</div></div>';
   if(rolled)startDice(S.dice);
   afterRender();applyHL();
   drain();
+  turnAlert();
   botTick();
 }
 
 // ---------- ডান পাশের প্যানেল ----------
-function panel(){
-  var h='';
-  h+=coachCard();
-  h+=actionCard();
-  h+='<div class="card"><h3>খেলোয়াড়</h3><div class="mut" style="margin:-4px 0 6px">নামে ক্লিক করে যে কাউকে উৎসাহ দিন</div>';
+function panelLeft(){
+  var h=propsCard();
+  var lg=S.log.slice(0,HOLD?logHold:S.log.length).slice(-16).reverse();
+  h+='<div class="card"><h3>খেলার লগ</h3><div class="log2">'+lg.map(function(l){return '<div>'+esc(l)+'</div>';}).join('')+'</div><div class="mut" style="margin-top:4px">ব্যাংকে বাড়ি: '+bn(S.houses)+' • হোটেল: '+bn(S.hotels)+'</div></div>';
+  return h;
+}
+function panelRight(){
+  var h=coachCard()+actionCard();
+  h+='<div class="card"><h3>খেলোয়াড়</h3><div class="mut" style="margin:-4px 0 6px">পাশের "সমর্থন" বাটনে চাপ দিয়ে যে কাউকে উৎসাহ দিন</div>';
   S.players.forEach(function(p,i){
     var chips='';Object.keys(S.own).map(Number).sort(function(a,b){return a-b;}).forEach(function(k){var o=S.own[k];if(o.o===i){var q=SQ[k];var col=q.t==='prop'?GROUPS[q.g][0]:(q.t==='station'?'#444':'#ccc');chips+='<span class="chip'+(o.mort?' m':'')+'" style="background:'+col+'" title="'+esc(q.n)+'" onclick="G.deed('+k+')"></span>';}});
     var talk=sayActive()&&S.say.i===i?'<div class="bub">'+esc(S.say.t)+'</div>':'';
-    h+='<div class="pl'+(i===S.cur&&S.phase!=='over'?' cur':'')+(p.out?' out':'')+'"><div class="avw">'+avatarOf(p,46)+'<span class="dot" style="background:'+p.color+'"></span></div><div style="flex:1;min-width:0"><span class="nmx cheerable" onclick="G.cheer('+i+')" title="উৎসাহ দিন">'+esc(p.name)+'</span>'+
+    var cashV=HOLD?cashHold[i]:p.cash;
+    h+='<div class="pl'+(i===S.cur&&S.phase!=='over'?' cur':'')+(p.out?' out':'')+'" id="plr'+i+'"><div class="avw">'+avatarOf(p,46)+'<span class="dot" style="background:'+p.color+'"></span></div><div style="flex:1;min-width:0"><span class="nmx">'+esc(p.name)+'</span><span class="cfx" id="cf'+i+'">'+cheerFxHTML(i)+'</span>'+
       (p.bot?' <span class="mut">'+esc(BOTS[p.bot].title)+'</span>':'')+(MODE==='online'&&p.uid===UID?' <span class="mut">(আপনি)</span>':'')+(p.inJail?' 🔒':'')+(p.fc.length?' 🎫×'+p.fc.length:'')+
-      '<div class="cash">'+money(p.cash)+'</div><div class="chips">'+chips+'</div>'+talk+'</div>'+
-      (MODE==='online'&&HOST===UID&&!p.out&&p.uid!==UID&&!p.bot&&S.phase!=='over'?'<button class="sm warn" onclick="G.kick('+i+')" title="অনুপস্থিত খেলোয়াড়কে বাদ দিন">বাদ</button>':'')+'</div>';
+      '<div class="cash">'+money(cashV)+'</div><div class="chips">'+chips+'</div>'+talk+'</div>'+
+      '<div class="pbtns">'+(p.out?'':'<button class="sm gold" onclick="G.cheer('+i+')" title="'+esc(p.name)+'-কে সমর্থন দিন">সমর্থন</button>')+
+      (MODE==='online'&&HOST===UID&&!p.out&&p.uid!==UID&&!p.bot&&S.phase!=='over'?'<button class="sm warn" onclick="G.kick('+i+')" title="অনুপস্থিত খেলোয়াড়কে বাদ দিন">বাদ</button>':'')+'</div></div>';
   });
   h+='</div>';
   if(MODE==='online')h+='<div class="card" id="presbox">'+presHTML()+'</div>';
-  h+=propsCard();
-  h+='<div class="card"><h3>খেলার লগ</h3><div class="log2">'+S.log.slice(-14).reverse().map(function(l){return '<div>'+esc(l)+'</div>';}).join('')+'</div><div class="mut" style="margin-top:4px">ব্যাংকে বাড়ি: '+bn(S.houses)+' • হোটেল: '+bn(S.hotels)+'</div></div>';
   return h;
 }
 function coachCard(){
-  if(LEVEL!=='new'||!S||S.phase==='over')return '';
+  if(LEVEL!=='new'||!S||S.phase==='over'||HOLD)return '';
   var me=myIdx();if(me<0)return '';
   if(!COACH)return '<div class="card" style="padding:6px 12px"><span class="mut"> সহায়ক বন্ধ আছে।</span> <button class="sm alt" onclick="G.coach()">চালু করুন</button></div>';
   var who=actorOf(S);if(who!==me)return '<div class="card coach"><div class="hd"><div style="font-size:30px">🌱</div><div><div class="tx">একটু অপেক্ষা করুন…</div><div class="mut">অন্যের দান চলছে। দেখুন কী হয় — আপনার পালায় আমি বলে দেব!</div></div><button class="sm alt off" onclick="G.coach()">বন্ধ</button></div></div>';
@@ -83,10 +92,13 @@ function applyHL(){
   if(hl==='roll'||hl==='jailRoll'){}
 }
 function actionCard(){
-  var s=S,cur=s.cur,p=s.players[cur],h='<div class="card"><h3>আপনার কাজ</h3>',mine=isMe(cur);
+  var s=S,cur=s.cur,p=s.players[cur],mine=isMe(cur);
+  var yt=!HOLD&&s.phase!=='over'&&multiView()&&isMe(actorOf(s));
+  var h='<div class="card'+(yt?' yourturn':'')+'"><h3>'+(yt?'আপনার পালা — এখনই কাজ করুন':'আপনার কাজ')+'</h3>';
+  if(HOLD&&s.phase!=='over')return h+'<div class="mut">ঘুঁটি চলছে… চাল শেষ হলে হিসাব দেখানো হবে।</div></div>';
   var spectator=(MODE==='online'&&myIdx()<0);
   if(spectator)return h+'<div class="mut"> আপনি দর্শক — খেলা দেখছেন।</div></div>';
-  if(s.phase==='over'){return h+'<b>🏆 '+esc(s.players[s.winner].name)+' জয়ী! অভিনন্দন!</b><div class="acts"><button onclick="G.leave()">মেনুতে ফিরুন</button></div></div>';}
+  if(s.phase==='over'){return h+'<b>🏆 '+esc(s.players[s.winner].name)+' জয়ী! অভিনন্দন!</b>'+(s.timeUp?'<div class="mut" style="margin-top:4px">সময় শেষ হয়েছে — মোট সম্পদে সেরা।</div>'+scoreHTML().replace('class="sc"','class="sc inl"'):'')+'<div class="acts"><button onclick="G.leave()">মেনুতে ফিরুন</button></div></div>';}
   var wait=function(t){return '<div class="mut">'+(p.bot?' ':'')+esc(t)+'</div>';};
   if(s.phase==='roll'){
     if(!mine)h+=wait(p.name+(p.bot?' ভাবছে…':'-এর দানের অপেক্ষা…'));
@@ -215,4 +227,58 @@ function renderTradeModal(){
   '<div class="cols"><div class="box"><b>আপনি দেবেন</b><div style="margin:6px 0">নগদ ৳ <input type="number" min="0" style="width:90px" value="'+d.oc+'" onchange="G.tradeCash(\'oc\',this.value)"></div>'+plist(v,d.op,'op')+'</div>'+
   '<div class="box"><b>আপনি পাবেন</b><div style="margin:6px 0">নগদ ৳ <input type="number" min="0" style="width:90px" value="'+d.rc+'" onchange="G.tradeCash(\'rc\',this.value)"></div>'+plist(d.to,d.rp,'rp')+'</div></div>'+
   '<p class="mut">বাড়ি/হোটেল থাকা রঙের জায়গা বিনিময় করা যায় না।</p><div class="acts"><button onclick="G.tradeSend()">প্রস্তাব পাঠান</button><button class="alt" onclick="G.close()">বাতিল</button></div></div></div>';
+}
+
+// ---------- পালা বদলের সংকেত ----------
+function turnAlert(){
+  if(!S)return;
+  var a=actorOf(S),mine=S.phase!=='over'&&a>=0&&isMe(a);
+  if(HOLD||anim){return;}
+  document.body.classList.toggle('myturn-on',mine&&multiView());
+  if(mine&&(!wasMine||S.cur!==lastCurSeen)){
+    try{SFX.myTurn();}catch(e){}
+    banner('',multiView()?'আপনার পালা!':S.players[S.cur].name+'-এর পালা',multiView()?'ছক্কা চালান বা সিদ্ধান্ত নিন':'','turnme',1900);
+    flashTitle();
+  }
+  wasMine=mine;lastCurSeen=S.cur;
+}
+function flashTitle(){
+  if(!document.hidden)return;
+  var base='জমিদার',on=false;clearInterval(titleTimer);
+  titleTimer=setInterval(function(){on=!on;document.title=on?'আপনার পালা! — জমিদার':base;},900);
+  var stop=function(){clearInterval(titleTimer);document.title=base;document.removeEventListener('visibilitychange',stop);};
+  document.addEventListener('visibilitychange',stop);
+}
+
+// ---------- সময়সীমার ঘড়ি ----------
+function pad2(n){return (n<10?'০':'')+bn(n);}
+function mmss(ms){var t=Math.max(0,Math.ceil(ms/1000));return pad2(Math.floor(t/60))+':'+pad2(t%60);}
+function clockInfo(){
+  if(!S.limit)return {cls:'off',lbl:'সময়সীমা',val:'নেই',sub:'শেষ জমিদার না থাকা পর্যন্ত খেলা চলবে'};
+  if(S.phase==='over')return S.timeUp?{cls:'end',lbl:'সময়',val:'শেষ',sub:'মোট সম্পদে বিজয়ী ঠিক হয়েছে'}:{cls:'off',lbl:'সময়সীমা',val:bn(S.limit)+' মিনিট',sub:'খেলা শেষ'};
+  if(!S.endAt){var left=ownableCount()-Object.keys(S.own).length;return {cls:'wait',lbl:'ঘড়ি চালু হবে সব সম্পত্তি বিক্রি হলে',val:bn(S.limit)+' মিনিট',sub:'বিক্রি বাকি: '+bn(left)+'টি'};}
+  var rem=S.endAt-Date.now();
+  if(rem<=0)return {cls:'end',lbl:'সময় শেষ',val:'০০:০০',sub:S.phase==='roll'?'খেলা থামছে…':'এই দান শেষ হলেই খেলা থামবে'};
+  return {cls:rem<=60000?'run low':'run',lbl:'সময় বাকি',val:mmss(rem),sub:'সময় শেষে মোট সম্পদে সেরা জয়ী'};
+}
+function clockHTML(){var c=clockInfo();return '<div class="clk '+c.cls+'"><div class="cl1">'+c.lbl+'</div><div class="cl2">'+c.val+'</div><div class="cl3">'+c.sub+'</div></div>';}
+function clockBox(){return S&&S.limit?'<div class="clockbox" id="clock">'+clockHTML()+'</div>':'';}
+function tickClock(){
+  if(scr!=='game'||!S)return;
+  var el=document.getElementById('clock');if(el)el.innerHTML=clockHTML();
+  if(S.limit&&S.endAt&&S.phase!=='over'){
+    var rem=S.endAt-Date.now();
+    if(rem>0&&rem<=60000&&!clockWarn['m'+S.endAt]){clockWarn['m'+S.endAt]=1;SFX.warn();banner('','এক মিনিট বাকি!','','sm',1800);}
+    if(rem>0&&rem<=10000&&!HOLD)SFX.warn();
+  }
+  maybeTimeUp();
+}
+function maybeTimeUp(){
+  if(!S||S.phase==='over'||!S.limit||!S.endAt||Date.now()<S.endAt)return;
+  if(anim||HOLD||S.phase!=='roll')return;
+  var late=Date.now()-S.endAt;
+  var can=MODE==='local'||(MODE==='online'&&(HOST===UID||(late>10000&&myIdx()>=0)));
+  if(!can)return;
+  var r=apply(S,S.cur,{type:'timeUp'});if(r.err)return;
+  commit(r.s);
 }

@@ -24,10 +24,10 @@ function startLocalBots(){
   var nm=(NAME||'আপনি');
   var list=[{name:nm,av:MYAV}];
   setup.bots.forEach(function(k){list.push({name:BOTS[k].name,bot:k});});
-  MODE='local';S=newGame(list);S.diff=setup.diff;resetFx();scr='game';render();
+  MODE='local';S=newGame(list);S.diff=setup.diff;S.limit=setup.limit;resetFx();scr='game';render();
 }
 function startLocalHot(names,avs){
-  MODE='local';S=newGame(names.map(function(n,i){return {name:n,av:avs[i]};}));S.diff='med';resetFx();scr='game';render();
+  MODE='local';S=newGame(names.map(function(n,i){return {name:n,av:avs[i]};}));S.diff='med';S.limit=setup.limit;resetFx();scr='game';render();
 }
 function resetFx(){evV=null;evQ=[];FX=[];draining=false;cashShown=null;disp=null;lastRoll=null;cardN=null;moving=[];anim=false;diceBusy=false;seenLvl={};sayShown=0;sayUntil=0;autoUid=null;lastChange=Date.now();}
 
@@ -62,7 +62,7 @@ async function createRoom(){
   if(!DB||!UID){toast('অনলাইন সংযোগ এখনো প্রস্তুত নয়');return;}
   readName();var code=genCode();
   try{
-    await DB.doc('games/'+code).set({host:UID,started:false,created:Date.now(),bots:[],hostName:NAME});
+    await DB.doc('games/'+code).set({host:UID,started:false,created:Date.now(),bots:[],hostName:NAME,limit:setup.limit||0});
     await DB.doc('games/'+code+'/players/'+UID).set({name:NAME,av:MYAV,t:Date.now(),uid:UID});
   }catch(e){toast('ঘর বানানো যায়নি — Firestore rules/সংযোগ পরীক্ষা করুন।');return;}
   enterRoom(code);
@@ -94,7 +94,7 @@ function enterRoom(code){
   UNSUBS.push(DB.doc('games/'+code).onSnapshot(function(snap){
     clearTimeout(tm);
     if(!snap.exists){return;}
-    var d=snap.data();HOST=d.host;lobbyBots=d.bots||[];
+    var d=snap.data();HOST=d.host;lobbyBots=d.bots||[];lobbyLimit=d.limit||0;
     if(d.started&&d.s){
       var ns;try{ns=JSON.parse(d.s);}catch(e){return;}
       if(!S||ns.v>S.v){S=ns;started=true;scr='game';lastChange=Date.now();render();}
@@ -118,6 +118,14 @@ function startPresence(code){
     first=false;
   },function(){}));
 }
+// সমর্থন পেলে নামের পাশে বিস্ফোরণের ইমোজি ও গণনা
+function cheerFxHTML(i){var on=Date.now()<(cheerUntil[i]||0),n=cheerCnt[i]||0;return (on?'<span class="cpop">💥</span>':'')+(n?'<span class="ccnt" title="মোট সমর্থন">সমর্থন '+bn(n)+'</span>':'');}
+function markCheer(i){
+  cheerUntil[i]=Date.now()+3200;cheerCnt[i]=(cheerCnt[i]||0)+1;
+  var upd=function(){var el=document.getElementById('cf'+i);if(el)el.innerHTML=cheerFxHTML(i);};
+  upd();var row=document.getElementById('plr'+i);if(row){row.classList.remove('cheered');void row.offsetWidth;row.classList.add('cheered');}
+  setTimeout(upd,3300);
+}
 function updatePres(){var el=document.getElementById('presbox');if(el)el.innerHTML=presHTML();}
 var CHEER_LINES=['জয় হোক!','দারুণ খেলছেন!','চালিয়ে যান!','সাবাশ!','ভাগ্য আপনার সাথে!','হেরে যাবেন না!','জমিদারি আপনারই!','একদম জমিয়ে দিন!'];
 var lastCheer=0;
@@ -134,7 +142,8 @@ function showCheer(c){
   var d=document.createElement('div');d.className='cheer';
   d.innerHTML='<div class="cav">'+avatar(c.fromAv,40)+'</div><div><b>'+esc(c.from)+'</b> উৎসাহ দিলেন <b>'+esc(c.toName)+'</b>-কে<div class="cl">'+esc(c.line)+'</div></div><div class="cav">'+avatar(c.toAv,40)+'</div>';
   box.appendChild(d);while(box.children.length>5)box.removeChild(box.firstChild);
-  try{SFX.cheer();confetti(26);}catch(e){}
+  try{SFX.cheer();}catch(e){}
+  markCheer(c.to);
   setTimeout(function(){d.classList.add('out');setTimeout(function(){d.remove();},500);},6500);
 }
 function unsubAll(){clearInterval(hbTimer);UNSUBS.forEach(function(f){try{f();}catch(e){}});UNSUBS=[];}
@@ -155,7 +164,7 @@ async function startOnline(){
   var list=lobbyPlayers.slice(0,6).map(function(p){return {uid:p.uid,name:p.name,av:p.av};});
   lobbyBots.slice(0,6-list.length).forEach(function(k){list.push({name:BOTS[k].name,bot:k});});
   if(list.length<2){toast('কমপক্ষে ২ জন লাগবে — বন্ধুকে লিংক পাঠান বা কম্পিউটার চরিত্র যোগ করুন');return;}
-  var s=newGame(list);s.diff=setup.diff;
+  var s=newGame(list);s.diff=setup.diff;s.limit=setup.limit;
   S=s;started=true;scr='game';resetFx();lastChange=Date.now();render();
   try{await DB.doc('games/'+CODE).update({started:true,s:JSON.stringify(s),v:s.v,uids:list.filter(function(p){return p.uid;}).map(function(p){return p.uid;})});}catch(e){toast('শুরু করা যায়নি');}
 }

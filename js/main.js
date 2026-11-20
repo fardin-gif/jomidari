@@ -18,6 +18,7 @@ window.G={
   joinLink:function(){joinRoom(JOINCODE);},
   vsCom:function(){scr='setup';render();},
   togBot:function(k){var i=setup.bots.indexOf(k);if(i>=0){if(setup.bots.length>1)setup.bots.splice(i,1);else toast('কমপক্ষে ১ জন প্রতিপক্ষ লাগবে');}else if(setup.bots.length<5)setup.bots.push(k);render();},
+  setLimit:function(v){var m=Math.floor(Number(v)||0);if(m<0)m=0;if(m>0&&m<5)m=5;if(m>600)m=600;setup.limit=m;lsSet('jm_limit',String(m));if(MODE==='online'&&HOST===UID&&DB&&CODE&&!started){DB.doc('games/'+CODE).update({limit:m}).catch(function(){});}render();},
   setDiff:function(d){setup.diff=d;render();},
   startCom:function(){if(!LEVEL){toast('আগে বলুন আপনি কেমন খেলোয়াড়');return;}NAME=NAME||'আপনি';lsSet('jm_name',NAME);startLocalBots();},
   hot:function(){scr='hot';render();},
@@ -47,4 +48,5 @@ document.addEventListener('click',function(){ac();});
   render();
   initNet();
   setInterval(function(){if(scr==='game')botTick();},4000);
+  setInterval(tickClock,1000);
 })();

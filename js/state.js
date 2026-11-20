@@ -6,9 +6,11 @@ var DB=null,UID=null,CODE=null,HOST=null,UNSUBS=[],WRITE=Promise.resolve(),dbRea
 var lobbyPlayers=[],lobbyBots=[],started=false,scr='home',dbMsg='',roomExists=null;
 var NAME=lsGet('jm_name'),MYAV=lsGet('jm_av')||HUMAN_AV[Math.floor(Math.random()*HUMAN_AV.length)],LEVEL=lsGet('jm_level'),COACH=lsGet('jm_coach')!=='0';
 var setup={n:1,bots:['majumdar'],diff:{new:'easy',ent:'med',zam:'hard'}[lsGet('jm_level')]||'med',hot:3};
-var JOINCODE=null;
+var JOINCODE=null,lobbyLimit=0,clockWarn={};
+setup.limit=parseInt(lsGet('jm_limit'),10)||0;
 var bidVal='',tradeDraft=null,lastRoll=null,armed=null,disp=null,moveTo=[],moving=[],anim=false,diceBusy=false,diceUntil=0,dicePrev=[1,1],cardN=null,cardUntil=0,cardFresh=false,seenLvl={};
 var lastChange=Date.now(),autoUid=null,sayShown=0,sayUntil=0;
+var cashHold=null,logHold=0,HOLD=false,wasMine=false,lastCurSeen=-1,titleTimer=null,cheerUntil={},cheerCnt={};
 var AUTO_MS=90000,PRES=[],hbTimer=null,cheerSeen={};
 
 function arm(key,fn,msg){if(armed===key){armed=null;fn();}else{armed=key;toast(msg);setTimeout(function(){if(armed===key)armed=null;},4000);}}

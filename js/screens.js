@@ -78,12 +78,23 @@ function setLevel(l){
   toast(l==='new'?'ঠিক আছে! খেলার মাঝে আমি পরামর্শ দেব ':(l==='ent'?'দারুণ! নিজের মতো খেলুন ':'জমিদারি চাল দেখাতে প্রস্তুত! '));
 }
 
+// ---------- সময়সীমা বাছাই (হোস্ট) ----------
+function limitPicker(){
+  var L=setup.limit,pre=(L===20||L===30);
+  return '<div class="seg limseg">'+[[20,'২০ মিনিট'],[30,'৩০ মিনিট']].map(function(x){return '<button class="'+(L===x[0]?'on':'')+'" onclick="G.setLimit('+x[0]+')">'+x[1]+'</button>';}).join('')+
+    '<span class="limin'+(L>0&&!pre?' on':'')+'"><input type="number" min="5" max="600" placeholder="নিজে লিখুন" value="'+(L>0&&!pre?L:'')+'" onchange="G.setLimit(this.value)"> মিনিট</span>'+
+    '<button class="'+(L===0?'on':'')+'" onclick="G.setLimit(0)">সীমাহীন</button></div>'+
+    '<div class="mut" style="margin-top:6px">'+(L>0?'সব সম্পত্তি বিক্রি হলে পর্দায় '+bn(L)+' মিনিটের ঘড়ি চালু হবে। সময় শেষে যার মোট সম্পদ (নগদ + সম্পত্তি + বাড়ি-হোটেল) সবচেয়ে বেশি, সে-ই জমিদার।':'কোনো সময়সীমা নেই — একজন ছাড়া সবাই দেউলিয়া না হওয়া পর্যন্ত খেলা চলবে।')+'</div>';
+}
+function limitText(m){return m>0?bn(m)+' মিনিট (সব সম্পত্তি বিক্রি হলে ঘড়ি চালু)':'সীমাহীন';}
+
 // ---------- কম্পিউটারের সাথে: সেটআপ ----------
 function renderSetup(){
   var h=topbar()+'<div class="wrapc" style="max-width:860px"><div class="card" style="margin-top:16px"><h2>কম্পিউটারের সাথে খেলুন</h2><p class="mut">স্তর, প্রতিপক্ষ ও কঠিনতা বেছে নিন।</p>';
   h+='<h3>১. আপনি কেমন খেলোয়াড়?</h3><p class="mut" style="margin:0 0 8px">প্রথমবার ক্রেতা বাছলে খেলার মাঝে প্রতিটি ধাপে পরামর্শ পাবেন।</p>'+levelCards(LEVEL,'G.setLevel2');
   h+='<hr class="hr"><h3>২. প্রতিপক্ষ বাছুন <span class="mut">(১–৫ জন)</span></h3><div class="cpick">'+BOT_ORDER.map(function(k){var b=BOTS[k],on=setup.bots.indexOf(k)>=0;return '<div class="cp'+(on?' on':'')+(k==='majumdar'?' star':'')+'" onclick="G.togBot(\''+k+'\')">'+avatar(k,76)+'<b>'+b.name+'</b><small>'+b.title+'</small><small>'+b.blurb+'</small></div>';}).join('')+'</div>';
   h+='<hr class="hr"><h3>৩. কম্পিউটার কত চালাক?</h3><div class="seg">'+[['easy',' সহজ'],['med',' মাঝারি'],['hard',' কঠিন']].map(function(d){return '<button class="'+(setup.diff===d[0]?'on':'')+'" onclick="G.setDiff(\''+d[0]+'\')">'+d[1]+'</button>';}).join('')+'</div>';
+  h+='<hr class="hr"><h3>৪. খেলা কতক্ষণ চলবে?</h3>'+limitPicker();
   h+='<hr class="hr"><div class="row" style="justify-content:space-between"><div class="row">'+avatar(MYAV,44)+'<b>'+esc(NAME||'আপনি')+'</b><button class="sm alt" onclick="G.avModal()">অবতার</button></div><div class="acts" style="margin:0"><button class="alt" onclick="G.home()">ফিরে যান</button><button class="big gold" onclick="G.startCom()">খেলা শুরু </button></div></div></div></div>';
   app.innerHTML=h;
 }
@@ -93,7 +104,7 @@ var hotNames=[];
 function renderHot(){
   var n=setup.hot,h=topbar()+'<div class="wrapc" style="max-width:640px"><div class="card" style="margin-top:16px"><h2>একই ডিভাইসে পালা করে</h2><div class="row" style="margin:10px 0">কতজন খেলবেন? <div class="seg">'+[2,3,4,5,6].map(function(k){return '<button class="'+(k===n?'on':'')+'" onclick="G.hotN('+k+')">'+bn(k)+'</button>';}).join('')+'</div></div><div id="locnames">';
   for(var i=0;i<n;i++)h+='<div class="row" style="margin:6px 0">'+avatar(HUMAN_AV[i],40)+'<input class="ln" maxlength="14" placeholder="খেলোয়াড় '+bn(i+1)+'" value="'+esc(hotNames[i]||'')+'" oninput="hotNames['+i+']=this.value"></div>';
-  h+='</div><div class="acts"><button class="alt" onclick="G.home()">ফিরে যান</button><button class="big gold" onclick="G.startHot()">খেলা শুরু </button></div></div></div>';
+  h+='</div><h3 style="margin-top:12px">খেলা কতক্ষণ চলবে?</h3>'+limitPicker()+'<div class="acts"><button class="alt" onclick="G.home()">ফিরে যান</button><button class="big gold" onclick="G.startHot()">খেলা শুরু </button></div></div></div>';
   app.innerHTML=h;
 }
 
@@ -123,7 +134,8 @@ function renderLobby(){
   if(host){
     h+='<hr class="hr"><h3>কম্পিউটার চরিত্র যোগ করুন <span class="mut">(ইচ্ছা হলে)</span></h3><div class="row">'+BOT_ORDER.filter(function(k){return lobbyBots.indexOf(k)<0;}).map(function(k){return '<button class="sm alt" onclick="G.addBot(\''+k+'\')">'+avatar(k,26)+' '+BOTS[k].name+'</button>';}).join('')+'</div>'+
     '<h3 style="margin-top:12px">কম্পিউটার কত চালাক?</h3><div class="seg">'+[['easy',' সহজ'],['med',' মাঝারি'],['hard',' কঠিন']].map(function(d){return '<button class="'+(setup.diff===d[0]?'on':'')+'" onclick="G.setDiff(\''+d[0]+'\')">'+d[1]+'</button>';}).join('')+'</div>';
-  }
+    h+='<h3 style="margin-top:12px">খেলা কতক্ষণ চলবে?</h3>'+limitPicker();
+  }else h+='<hr class="hr"><div><b>খেলার সময়:</b> '+limitText(lobbyLimit)+'</div>';
   h+='<div class="acts">'+(host?'<button class="big gold" onclick="G.start()" '+(cnt<2?'disabled':'')+'>খেলা শুরু করুন </button>':'<span class="mut"> হোস্ট খেলা শুরু করার অপেক্ষায়…</span>')+'<button class="alt" onclick="G.leave()">বের হন</button></div></div></div>';
   app.innerHTML=h;
 }
