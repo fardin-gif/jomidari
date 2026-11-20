@@ -1,8 +1,22 @@
 // ====== জমিদার — Firebase সংযোগ, ঘর, লিংক ======
+// ---- ত্রুটি: দৈনিক সীমা শেষ হলে বন্ধুত্বপূর্ণ বার্তা ----
+var quotaShown=false;
+function isQuota(e){return !!e&&(e.code==='resource-exhausted'||/quota|exhausted/i.test(String(e.message||'')));}
+function netErr(e,fallback){
+  if(isQuota(e)){
+    toast('আজকের অনলাইন সীমা শেষ');
+    if(!quotaShown){quotaShown=true;
+      modalEl.innerHTML='<div class="modalbg"><div class="modal" style="max-width:480px;text-align:center"><h2>আজকের অনলাইন সীমা শেষ</h2><p>অনেক মানুষ খেলছে, তাই আজকের জন্য অনলাইন খেলার সীমা পূর্ণ হয়ে গেছে। কম্পিউটারের সাথে বা একই ডিভাইসে এখনই খেলতে পারেন। অনলাইন সীমা প্রতিদিন বাংলাদেশ সময় দুপুরের দিকে (প্রায় ১–২টায়) নতুন হয়।</p><div class="acts" style="justify-content:center"><button onclick="G.close();G.vsCom()">কম্পিউটারের সাথে খেলুন</button><button class="alt" onclick="G.close()">ঠিক আছে</button></div></div></div>';}
+    return true;
+  }
+  if(fallback)toast(fallback);
+  return false;
+}
 function push(){
   if(MODE!=='online')return;
   var snap=JSON.stringify(S),v=S.v;
   WRITE=WRITE.then(function(){return DB.doc('games/'+CODE).update({s:snap,v:v});}).catch(function(e){
+    if(netErr(e))return;
     if(e&&(e.code==='permission-denied'||e.code==='invalid_argument'))toast('লেখার অনুমতি নেই — Firestore rules ঠিকমতো publish করা হয়েছে কি দেখুন।');
     else toast('সংযোগে সমস্যা, আবার চেষ্টা করুন।');
   });
@@ -29,7 +43,7 @@ function startLocalBots(){
 function startLocalHot(names,avs){
   MODE='local';S=newGame(names.map(function(n,i){return {name:n,av:avs[i]};}));S.diff='med';S.limit=setup.limit;resetFx();scr='game';render();
 }
-function resetFx(){evV=null;evQ=[];FX=[];draining=false;cashShown=null;disp=null;lastRoll=null;cardN=null;moving=[];anim=false;diceBusy=false;seenLvl={};sayShown=0;sayUntil=0;autoUid=null;lastChange=Date.now();}
+function resetFx(){cleanFor=null;clearTimeout(cleanTimer);evV=null;evQ=[];FX=[];draining=false;cashShown=null;disp=null;lastRoll=null;cardN=null;moving=[];anim=false;diceBusy=false;seenLvl={};sayShown=0;sayUntil=0;autoUid=null;lastChange=Date.now();}
 
 async function initNet(){
   var cfg=window.FIREBASE_CONFIG;
@@ -46,6 +60,7 @@ async function initNet(){
         get:async function(){return snapOf(await fsM.getDoc(ref));},
         set:function(d){return fsM.setDoc(ref,d);},
         update:function(d){return fsM.updateDoc(ref,d);},
+        del:function(){return fsM.deleteDoc(ref);},
         onSnapshot:function(n,e){return fsM.onSnapshot(ref,function(s){n(snapOf(s));},e);}};},
       collection:function(path){var c=fsM.collection(fs,path);return {orderBy:function(f){return {onSnapshot:function(n,e){return fsM.onSnapshot(fsM.query(c,fsM.orderBy(f)),function(s){n({docs:s.docs.map(function(d){return {data:function(){return d.data();}};})});},e);}};}};}
     };
@@ -64,7 +79,7 @@ async function createRoom(){
   try{
     await DB.doc('games/'+code).set({host:UID,started:false,created:Date.now(),bots:[],hostName:NAME,limit:setup.limit||0});
     await DB.doc('games/'+code+'/players/'+UID).set({name:NAME,av:MYAV,t:Date.now(),uid:UID});
-  }catch(e){toast('ঘর বানানো যায়নি — Firestore rules/সংযোগ পরীক্ষা করুন।');return;}
+  }catch(e){if(!netErr(e,'ঘর বানানো যায়নি — Firestore rules/সংযোগ পরীক্ষা করুন।'));return;}
   enterRoom(code);
 }
 // লিংকের ঘর আছে কি দেখে নেওয়া
@@ -77,12 +92,12 @@ async function joinRoom(code){
   if(!DB||!UID)return;
   code=(code||'').trim().toUpperCase();readName();
   if(code.length<3){toast('ঘরের কোড দিন');return;}
-  var snap;try{snap=await DB.doc('games/'+code).get();}catch(e){toast('সংযোগে সমস্যা');return;}
+  var snap;try{snap=await DB.doc('games/'+code).get();}catch(e){if(!netErr(e,'সংযোগে সমস্যা'));return;}
   if(!snap.exists){toast('এই ঘর পাওয়া যায়নি — লিংকটি ঠিক আছে কি?');return;}
   var d=snap.data();
   if(!d.started){
     try{await DB.doc('games/'+code+'/players/'+UID).set({name:NAME,av:MYAV,t:Date.now(),uid:UID});}
-    catch(e){toast('যোগ দেওয়া যায়নি — Firestore rules/সংযোগ পরীক্ষা করুন।');return;}
+    catch(e){if(!netErr(e,'যোগ দেওয়া যায়নি — Firestore rules/সংযোগ পরীক্ষা করুন।'));return;}
   }
   enterRoom(code);
 }
@@ -99,7 +114,7 @@ function enterRoom(code){
       var ns;try{ns=JSON.parse(d.s);}catch(e){return;}
       if(!S||ns.v>S.v){S=ns;started=true;scr='game';lastChange=Date.now();render();}
     }else{render();}
-  },function(){toast('ঘরের সঙ্গে সংযোগ কেটে গেছে');}));
+  },function(e){netErr(e,'ঘরের সঙ্গে সংযোগ কেটে গেছে');}));
   startPresence(code);
   UNSUBS.push(DB.collection('games/'+code+'/players').orderBy('t').onSnapshot(function(snap){
     lobbyPlayers=snap.docs.map(function(d){return d.data();});
@@ -110,7 +125,7 @@ function enterRoom(code){
 function startPresence(code){
   PRES=[];var pp='games/'+code+'/presence/'+UID;
   DB.doc(pp).set({uid:UID,name:NAME,av:MYAV,t:Date.now(),seen:Date.now()}).catch(function(){});
-  clearInterval(hbTimer);hbTimer=setInterval(function(){DB.doc(pp).update({seen:Date.now(),name:NAME,av:MYAV}).catch(function(){});updatePres();},25000);
+  clearInterval(hbTimer);hbTimer=setInterval(function(){DB.doc(pp).update({seen:Date.now(),name:NAME,av:MYAV}).catch(function(){});updatePres();},60000);
   UNSUBS.push(DB.collection('games/'+code+'/presence').orderBy('t').onSnapshot(function(snap){PRES=snap.docs.map(function(d){return d.data();});updatePres();},function(){}));
   var first=true;cheerSeen={};
   UNSUBS.push(DB.collection('games/'+code+'/cheers').orderBy('t').onSnapshot(function(snap){
@@ -145,6 +160,23 @@ function showCheer(c){
   try{SFX.cheer();}catch(e){}
   markCheer(c.to);
   setTimeout(function(){d.classList.add('out');setTimeout(function(){d.remove();},500);},6500);
+}
+// ---- খেলা শেষে ঘর পরিষ্কার (ফ্রি প্ল্যানের জায়গা ও কোটা বাঁচাতে) ----
+var cleanTimer=null,cleanFor=null;
+function scheduleCleanup(){
+  if(MODE!=='online'||!DB||!CODE||!S||S.phase!=='over'||cleanFor===CODE)return;
+  cleanFor=CODE;clearInterval(hbTimer);
+  var code=CODE,host=HOST===UID,uid=UID;
+  var delOwn=function(){['players','presence','cheers'].forEach(function(c){try{DB.doc('games/'+code+'/'+c+'/'+uid).del().catch(function(){});}catch(e){}});};
+  clearTimeout(cleanTimer);
+  cleanTimer=setTimeout(function(){
+    delOwn();
+    if(!host)return;
+    // হোস্ট: অন্যদের নথি (rules অনুমতি দিলে) ও শেষে ঘরের মূল নথি মুছে দেয়
+    var ids={};lobbyPlayers.forEach(function(p){ids[p.uid]=1;});PRES.forEach(function(p){ids[p.uid]=1;});Object.keys(cheerSeen).forEach(function(k){ids[k]=1;});
+    var ps=[];Object.keys(ids).forEach(function(u){if(u===uid)return;['players','presence','cheers'].forEach(function(c){ps.push(DB.doc('games/'+code+'/'+c+'/'+u).del().catch(function(){}));});});
+    Promise.all(ps).then(function(){return DB.doc('games/'+code).del();}).catch(function(){});
+  },host?180000:60000);
 }
 function unsubAll(){clearInterval(hbTimer);UNSUBS.forEach(function(f){try{f();}catch(e){}});UNSUBS=[];}
 async function addLobbyBot(key){

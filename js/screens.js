@@ -147,7 +147,7 @@ function nameModal(){
   setTimeout(function(){var e=document.getElementById('nm0');if(e)e.focus();},50);
 }
 function presHTML(){
-  var now=Date.now(),act=PRES.filter(function(p){return now-(p.seen||0)<80000;});
+  var now=Date.now(),act=PRES.filter(function(p){return now-(p.seen||0)<150000;});
   if(!act.length)return '';
   var pu={};if(S)S.players.forEach(function(p){if(p.uid)pu[p.uid]=1;});
   return '<h3>এখন লিংকে আছেন: '+bn(act.length)+' জন</h3><div class="pres">'+act.map(function(p){return '<span class="pchip">'+avatar(p.av||'h1',22)+esc(p.name)+(pu[p.uid]?'':' <small>(দর্শক)</small>')+'</span>';}).join('')+'</div>';

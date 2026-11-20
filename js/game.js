@@ -49,6 +49,7 @@ function renderGame(){
   afterRender();applyHL();
   drain();
   turnAlert();
+  scheduleCleanup();
   botTick();
 }
 
