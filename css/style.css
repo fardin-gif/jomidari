@@ -363,3 +363,53 @@ body.myturn-on::after{content:'';position:fixed;inset:0;pointer-events:none;z-in
 .sc.inl small{color:var(--mut);font-size:12px}
 @media(prefers-reduced-motion:reduce){.clk.low{animation:none}}
 .limseg>button:not(:last-child){border-right:2.5px solid var(--ink)}
+
+.rollbar{min-height:64px;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;border:3px dashed #c9b88a;border-radius:16px;padding:8px}
+.rollbar.on{border:3px solid var(--ink);background:#fff6d6;box-shadow:0 4px 0 var(--ink)}
+.rollbar.on button.big{min-width:220px;font-size:22px}
+.cheerfeed{max-height:190px;overflow:auto}
+.cfi{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px dashed #e3d6b0;font-size:14px}
+.cfi .cl{color:var(--maroon);font-weight:700}
+.codejoin{display:flex;gap:6px;margin-top:10px;justify-content:center}
+.codejoin input{width:130px;text-transform:uppercase;text-align:center;border:3px solid var(--ink);border-radius:10px;padding:6px;font-family:inherit;font-size:16px}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:12px 0;font-weight:600}
+.srow input[type=range]{flex:1;max-width:180px}
+#cheers{display:none}
+
+/* চ্যাট */
+#chatdock{position:fixed;right:14px;bottom:14px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.cbtn{background:var(--maroon);color:#fff;border:3px solid var(--ink);border-radius:999px;padding:8px 18px;font-weight:800;box-shadow:0 4px 0 var(--ink);cursor:pointer;font-family:inherit;font-size:16px}
+.cbtn.dm{background:#1d7bd8}
+.cbadge{background:#fff;color:var(--maroon);border-radius:999px;padding:0 7px;margin-left:4px;font-size:14px}
+.cpanel{width:min(360px,calc(100vw - 24px));height:min(62vh,480px);flex-direction:column;background:var(--paper);border:3px solid var(--ink);border-radius:18px;box-shadow:0 6px 0 var(--ink);overflow:hidden}
+.chead{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:2px solid var(--ink);background:#fff1c4}
+.cmsgs{flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:6px}
+.cm{background:#fff;border:2px solid #d9c9a0;border-radius:12px;padding:6px 9px;max-width:92%;align-self:flex-start;font-size:14px}
+.cm.me{align-self:flex-end;background:#fff6d6}
+.cm.dm{border-color:#1d7bd8;background:#e8f2ff}
+.cm .ch{display:flex;align-items:center;gap:6px}.cm .ch .mut{font-size:11px}
+.ctag{font-size:12px;color:#1d5fa8;font-weight:700}
+.cquote{font-size:12px;color:#777;border-left:3px solid #ccc;padding-left:6px;margin:2px 0}
+.ct{word-break:break-word}
+.crep{border:0;background:none;color:var(--maroon);font-size:12px;cursor:pointer;padding:2px 0;font-family:inherit;font-weight:700}
+.cto{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px 8px;border-top:2px solid #e3d6b0}
+.cchip{color:var(--ink);border:2px solid var(--ink);border-radius:999px;background:#fff;padding:1px 9px;font-size:13px;cursor:pointer;font-family:inherit}
+.cchip.on{background:var(--maroon);color:#fff}
+.crep,.creply button{color:var(--maroon)}
+.creply{font-size:12px;padding:4px 8px;background:#f4ead0}
+.cin{display:flex;gap:6px;padding:8px;border-top:2px solid var(--ink)}
+.cin input{flex:1;min-width:0;border:2px solid var(--ink);border-radius:10px;padding:6px 8px;font-family:inherit;font-size:15px}
+/* ভয়েস */
+.vlist{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.vrow{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:10px;border:2px solid transparent}
+.vrow small.bad{color:var(--warn)}
+.speaking{box-shadow:0 0 0 3px #2a9d4a;border-radius:12px}
+.vrow.speaking{border-color:#2a9d4a;background:#e6f6ea;box-shadow:none}
+
+.credit{overflow:visible}
+.team{position:relative;display:inline-block;color:var(--maroon);font-weight:800;cursor:pointer;border-bottom:3px solid var(--gold);outline:none}
+.tpop{display:none;position:absolute;left:50%;bottom:calc(100% + 12px);transform:translateX(-50%);z-index:20;width:max-content;max-width:86vw;background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);padding:10px 16px;text-align:left;font-weight:600;font-size:15px;line-height:1.5;transform:translateX(-50%) rotate(1deg)}
+.team:hover .tpop,.team:focus .tpop,.team.open .tpop{display:block}
+.tpop .tr{display:block;padding:3px 0}
+.tpop small{display:block;font-size:12px;color:#777;font-weight:600}
+.tpop a{color:var(--maroon);font-weight:800;border-bottom:3px solid var(--gold);text-decoration:none}
