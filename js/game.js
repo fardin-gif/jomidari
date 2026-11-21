@@ -39,12 +39,12 @@ function renderGame(){
   }
   var sayHTML='';
   if(sayActive()&&S.players[S.say.i])sayHTML='<div class="sayc">'+avatarOf(S.players[S.say.i],60)+'<span><b>'+esc(pname(S.say.i))+':</b> '+esc(S.say.t)+'</span></div>';
-  var center='<div class="center"><div class="deck ch">❓<br>ভাগ্য পরীক্ষা</div><div class="deck cc">📦<br>কমিউনিটি চেস্ট</div><div class="logo">জমিদার</div>'+
+  var center='<div class="center"><div class="deck ch">❓<br>ভাগ্য পরীক্ষা</div><div class="deck cc">📦<br>কমিউনিটি চেস্ট</div><div class="logo">ধনী হবার<br>মজার খেলা</div>'+
     '<div class="dice3'+(canRoll?' can':'')+'" id="dice" '+(canRoll?'onclick="G.diceClick()" title="ক্লিক করে ছক্কা চালুন"':'')+'>'+diceInner(faces)+'</div>'+
     (canRoll?'<div class="hint"> ছক্কায় ক্লিক করুন</div>':'')+
     '<div class="msg">'+esc(phaseMsg())+'</div>'+sayHTML+cardHTML+fxLayerHTML()[0]+'</div>';
   var scrollY=window.scrollY;
-  app.innerHTML=topbar()+'<div class="wrap3"><div class="colL">'+panelLeft()+'</div><div class="colM">'+clockBox()+'<div class="board">'+cells+center+'<div class="tkl">'+tokensHTML()+'</div>'+fxLayerHTML()[1]+winOverlay()+'</div>'+rollBar()+'</div><div class="colR">'+panelRight()+'</div></div>';
+  app.innerHTML=topbar()+'<div class="wrap3"><div class="colL">'+panelLeft()+'</div><div class="colM">'+clockBox()+'<div class="board">'+cells+center+'<div class="tkl">'+tokensHTML()+'</div>'+fxLayerHTML()[1]+winOverlay()+'</div></div><div class="colR">'+panelRight()+'</div></div>';
   if(rolled)startDice(S.dice);
   afterRender();applyHL();
   drain();
@@ -54,13 +54,14 @@ function renderGame(){
 }
 
 // ---------- ডান পাশের প্যানেল ----------
-// বোর্ডের নিচে স্থির জায়গায় ছক্কা বাটন — অন্য কাজের বাটনের সাথে কখনও জায়গা বদলায় না
-function rollBar(){
+// "আপনার কাজ"-এর পাশেই স্থির ছক্কা-কার্ড — বাটন কখনও জায়গা বদলায় না; কিবোর্ডের স্পেস/Enter/R-ও চলে
+function rollCard(){
   if(!S||S.phase==='over')return '';
-  var p=S.players[S.cur],ok=!HOLD&&S.phase==='roll'&&isMe(S.cur)&&!(MODE==='online'&&myIdx()<0);
-  if(!ok)return '<div class="rollbar idle"><span class="mut">'+(S.phase==='roll'&&!HOLD?esc(p.name)+(p.bot?' ভাবছে…':'-এর দান চলছে…'):'চাল চলছে…')+'</span></div>';
-  if(p.inJail)return '<div class="rollbar on"><button data-a="jailRoll" onclick="A(\'jailRoll\')">ডাবলসের চেষ্টা</button><button class="alt" data-a="payJail" onclick="A(\'payJail\')" '+(p.cash<50?'disabled':'')+'>৫০ টাকা দিয়ে বের হন</button>'+(p.fc.length?'<button class="alt" data-a="useCard" onclick="A(\'useCard\')">মুক্তির কার্ড</button>':'')+'<span class="mut">চেষ্টা '+bn(p.jt)+'/৩</span></div>';
-  return '<div class="rollbar on"><button class="big gold" data-a="roll" onclick="G.diceClick()">ছক্কা চালুন</button></div>';
+  var p=S.players[S.cur],spec=(MODE==='online'&&myIdx()<0);if(spec)return '';
+  var ok=!HOLD&&S.phase==='roll'&&isMe(S.cur);
+  if(!ok)return '<div class="card rollcard idle"><h3>ছক্কা</h3><div class="mut">'+(S.phase==='roll'&&!HOLD?esc(p.name)+(p.bot?' ভাবছে…':'-এর দান'):'অপেক্ষা…')+'</div></div>';
+  if(p.inJail)return '<div class="card rollcard on"><h3>ছক্কা</h3><button data-a="jailRoll" onclick="A(\'jailRoll\')">ডাবলসের চেষ্টা</button><button class="alt" data-a="payJail" onclick="A(\'payJail\')" '+(p.cash<50?'disabled':'')+'>৫০ টাকা দিন</button>'+(p.fc.length?'<button class="alt" data-a="useCard" onclick="A(\'useCard\')">মুক্তির কার্ড</button>':'')+'<small class="mut">স্পেস = চেষ্টা • চেষ্টা '+bn(p.jt)+'/৩</small></div>';
+  return '<div class="card rollcard on"><h3>ছক্কা</h3><button class="big gold" data-a="roll" onclick="G.diceClick()">ছক্কা চালুন</button><small class="mut">কিবোর্ডে স্পেস / Enter / R</small></div>';
 }
 function panelLeft(){
   var h=propsCard();
@@ -72,7 +73,7 @@ function panelLeft(){
   return h;
 }
 function panelRight(){
-  var h=coachCard()+actionCard();
+  var h=coachCard()+'<div class="actrow">'+actionCard()+rollCard()+'</div>';
   h+='<div class="card"><h3>খেলোয়াড়</h3><div class="mut" style="margin:-4px 0 6px">পাশের "সমর্থন" বাটনে চাপ দিয়ে যে কাউকে উৎসাহ দিন</div>';
   S.players.forEach(function(p,i){
     var chips='';Object.keys(S.own).map(Number).sort(function(a,b){return a-b;}).forEach(function(k){var o=S.own[k];if(o.o===i){var q=SQ[k];var col=q.t==='prop'?GROUPS[q.g][0]:(q.t==='station'?'#444':'#ccc');chips+='<span class="chip'+(o.mort?' m':'')+'" style="background:'+col+'" title="'+esc(q.n)+'" onclick="G.deed('+k+')"></span>';}});
@@ -114,7 +115,7 @@ function actionCard(){
   var wait=function(t){return '<div class="mut">'+(p.bot?' ':'')+esc(t)+'</div>';};
   if(s.phase==='roll'){
     if(!mine)h+=wait(p.name+(p.bot?' ভাবছে…':'-এর দানের অপেক্ষা…'));
-    else h+='<div class="mut">'+(p.inJail?'আপনি হাজতে — বোর্ডের নিচের বাটন থেকে বেছে নিন।':'বোর্ডের নিচের বড় বাটনে ছক্কা চালুন।')+'</div>';
+    else h+='<div class="mut">'+(p.inJail?'আপনি হাজতে — পাশের বাটন থেকে বেছে নিন।':'পাশের বাটনে বা কিবোর্ডের স্পেস চেপে ছক্কা চালুন।')+'</div>';
   }else if(s.phase==='buy'){
     var q=SQ[p.pos];
     if(!mine)h+=wait(p.name+' সিদ্ধান্ত নিচ্ছে…');
@@ -255,8 +256,8 @@ function turnAlert(){
 }
 function flashTitle(){
   if(!document.hidden)return;
-  var base='জমিদার',on=false;clearInterval(titleTimer);
-  titleTimer=setInterval(function(){on=!on;document.title=on?'আপনার পালা! — জমিদার':base;},900);
+  var base='ধনী হবার মজার খেলা',on=false;clearInterval(titleTimer);
+  titleTimer=setInterval(function(){on=!on;document.title=on?'আপনার পালা! — ধনী হবার মজার খেলা':base;},900);
   var stop=function(){clearInterval(titleTimer);document.title=base;document.removeEventListener('visibilitychange',stop);};
   document.addEventListener('visibilitychange',stop);
 }

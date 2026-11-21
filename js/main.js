@@ -32,7 +32,7 @@ window.G={
   addBot:addLobbyBot,rmBot:removeLobbyBot,
   start:startOnline,leave:leaveRoom,
   copy:function(){var l=shareLink(CODE);if(navigator.clipboard)navigator.clipboard.writeText(l).then(function(){toast('লিংক কপি হয়েছে  এবার বন্ধুদের পাঠান');},function(){toast(l);});else toast(l);},
-  share:function(){var l=shareLink(CODE);navigator.share({title:'জমিদার',text:'জমিদার খেলতে আসুন! ',url:l}).catch(function(){});},
+  share:function(){var l=shareLink(CODE);navigator.share({title:'ধনী হবার মজার খেলা',text:'ধনী হবার মজার খেলা খেলতে আসুন! ',url:l}).catch(function(){});},
   deed:showDeed,close:function(){closeModal();if(scr==='home'||scr==='join'||scr==='setup'||scr==='lobby')render();},
   bidIn:function(v){bidVal=v;},
   bidQuick:function(a){A('bid',{amt:a});},
@@ -55,3 +55,14 @@ document.addEventListener('click',function(){ac();});
   setInterval(function(){if(scr==='game')botTick();},4000);
   setInterval(tickClock,1000);
 })();
+
+// কিবোর্ড শর্টকাট: স্পেস / Enter / R চাপলেই ছক্কা (বা হাজতে ডাবলসের চেষ্টা)
+document.addEventListener('keydown',function(e){
+  if(e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(!(e.code==='Space'||e.key==='Enter'||e.key==='r'||e.key==='R'))return;
+  var t=document.activeElement,tag=t&&t.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||tag==='BUTTON'||tag==='A'||(t&&t.isContentEditable))return;
+  if(modalEl&&modalEl.innerHTML.trim())return;
+  if(!S||scr!=='game'||anim||HOLD||S.phase!=='roll'||!isMe(S.cur)||(MODE==='online'&&myIdx()<0))return;
+  e.preventDefault();G.diceClick();
+});
