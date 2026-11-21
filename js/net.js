@@ -66,7 +66,11 @@ async function initNet(){
         update:function(d){return fsM.updateDoc(ref,d);},
         del:function(){return fsM.deleteDoc(ref);},
         onSnapshot:function(n,e){return fsM.onSnapshot(ref,function(s){n(snapOf(s));},e);}};},
-      collection:function(path){var c=fsM.collection(fs,path);return {orderBy:function(f){return {onSnapshot:function(n,e){return fsM.onSnapshot(fsM.query(c,fsM.orderBy(f)),function(s){n({docs:s.docs.map(function(d){return {data:function(){return d.data();}};})});},e);}};}};}
+      collection:function(path){var c=fsM.collection(fs,path);
+        var wrap=function(q){return {onSnapshot:function(cb,e){return fsM.onSnapshot(q,function(s){cb({docs:s.docs.map(function(d){return {id:d.id,data:function(){return d.data();}};})});},e);}};};
+        return {orderBy:function(f){return wrap(fsM.query(c,fsM.orderBy(f)));},
+                where:function(f,op,v){return wrap(fsM.query(c,fsM.where(f,op,v)));},
+                add:function(d){return fsM.addDoc(c,d);}};}
     };
     dbReady=true;
   }catch(e){console.error(e);DB=null;dbMsg='Firebase সংযোগ হয়নি ('+(e&&e.code?e.code:'নেটওয়ার্ক/কনফিগ')+')। Authentication-এ Anonymous চালু আছে কি এবং কনফিগ ঠিক আছে কি দেখুন।';}
@@ -120,6 +124,7 @@ function enterRoom(code){
     }else{render();}
   },function(e){netErr(e,'ঘরের সঙ্গে সংযোগ কেটে গেছে');}));
   startPresence(code);
+  try{startChat(code);}catch(e){}
   UNSUBS.push(DB.collection('games/'+code+'/players').orderBy('t').onSnapshot(function(snap){
     lobbyPlayers=snap.docs.map(function(d){return d.data();});
     if(scr==='lobby')render();
@@ -180,7 +185,7 @@ function scheduleCleanup(){
   if(MODE!=='online'||!DB||!CODE||!S||S.phase!=='over'||cleanFor===CODE)return;
   cleanFor=CODE;clearInterval(hbTimer);
   var code=CODE,host=HOST===UID,uid=UID;
-  var delOwn=function(){['players','presence','cheers'].forEach(function(c){try{DB.doc('games/'+code+'/'+c+'/'+uid).del().catch(function(){});}catch(e){}});};
+  var delOwn=function(){try{stopVoice();chatCleanup(host);}catch(e){}['players','presence','cheers','voice'].forEach(function(c){try{DB.doc('games/'+code+'/'+c+'/'+uid).del().catch(function(){});}catch(e){}});};
   clearTimeout(cleanTimer);
   cleanTimer=setTimeout(function(){
     delOwn();
@@ -207,10 +212,10 @@ async function removeLobbyBot(key){
 async function startOnline(){
   if(HOST!==UID)return;
   var list=lobbyPlayers.slice(0,8).map(function(p){return {uid:p.uid,name:p.name,av:p.av};});
-  lobbyBots.slice(0,6-list.length).forEach(function(k){list.push({name:BOTS[k].name,bot:k});});
+  lobbyBots.slice(0,8-list.length).forEach(function(k){list.push({name:BOTS[k].name,bot:k});});
   if(list.length<2){toast('কমপক্ষে ২ জন লাগবে — বন্ধুকে লিংক পাঠান বা কম্পিউটার চরিত্র যোগ করুন');return;}
   var s=newGame(list);s.diff=setup.diff;s.limit=setup.limit;
   S=s;started=true;scr='game';resetFx();lastChange=Date.now();render();
   try{await DB.doc('games/'+CODE).update({started:true,s:JSON.stringify(s),v:s.v,uids:list.filter(function(p){return p.uid;}).map(function(p){return p.uid;})});}catch(e){toast('শুরু করা যায়নি');}
 }
-function leaveRoom(){if(MODE==='online'&&DB&&CODE){try{DB.doc('games/'+CODE+'/presence/'+UID).update({seen:0}).catch(function(){});}catch(e){}}PRES=[];resetFx();unsubAll();S=null;MODE=null;CODE=null;started=false;scr='home';lobbyPlayers=[];lobbyBots=[];JOINCODE=null;try{history.replaceState(null,'',location.pathname.replace(/\/r\/[^/]*$/,'/'));}catch(e){}render();}
+function leaveRoom(){try{stopVoice();stopChat();}catch(e){}if(MODE==='online'&&DB&&CODE){try{DB.doc('games/'+CODE+'/presence/'+UID).update({seen:0}).catch(function(){});}catch(e){}}PRES=[];resetFx();unsubAll();S=null;MODE=null;CODE=null;started=false;scr='home';lobbyPlayers=[];lobbyBots=[];JOINCODE=null;try{history.replaceState(null,'',location.pathname.replace(/\/r\/[^/]*$/,'/'));}catch(e){}render();}

@@ -67,6 +67,7 @@ function panelLeft(){
   var lg=S.log.slice(0,HOLD?logHold:S.log.length).slice(-16).reverse();
   h+='<div class="card"><h3>খেলার লগ</h3><div class="log2">'+lg.map(function(l){return '<div>'+esc(l)+'</div>';}).join('')+'</div><div class="mut" style="margin-top:4px">ব্যাংকে বাড়ি: '+bn(S.houses)+' • হোটেল: '+bn(S.hotels)+'</div></div>';
   if(MODE==='online')h+='<div class="card" id="presbox">'+presHTML()+'</div>';
+  h+=voiceCardHTML();
   h+='<div class="card"><h3>সমর্থন কর্নার</h3><div id="cheerfeed" class="cheerfeed">'+cheerFeedHTML()+'</div></div>';
   return h;
 }
@@ -77,7 +78,7 @@ function panelRight(){
     var chips='';Object.keys(S.own).map(Number).sort(function(a,b){return a-b;}).forEach(function(k){var o=S.own[k];if(o.o===i){var q=SQ[k];var col=q.t==='prop'?GROUPS[q.g][0]:(q.t==='station'?'#444':'#ccc');chips+='<span class="chip'+(o.mort?' m':'')+'" style="background:'+col+'" title="'+esc(q.n)+'" onclick="G.deed('+k+')"></span>';}});
     var talk=sayActive()&&S.say.i===i?'<div class="bub">'+esc(S.say.t)+'</div>':'';
     var cashV=HOLD?cashHold[i]:p.cash;
-    h+='<div class="pl'+(i===S.cur&&S.phase!=='over'?' cur':'')+(p.out?' out':'')+'" id="plr'+i+'"><div class="avw">'+avatarOf(p,46)+'<span class="dot" style="background:'+p.color+'"></span></div><div style="flex:1;min-width:0"><span class="nmx">'+esc(p.name)+'</span><span class="cfx" id="cf'+i+'">'+cheerFxHTML(i)+'</span>'+
+    h+='<div class="pl'+(i===S.cur&&S.phase!=='over'?' cur':'')+(p.out?' out':'')+'" id="plr'+i+'" data-vuid="'+esc(p.uid||'')+'"><div class="avw">'+avatarOf(p,46)+'<span class="dot" style="background:'+p.color+'"></span></div><div style="flex:1;min-width:0"><span class="nmx">'+esc(p.name)+'</span><span class="cfx" id="cf'+i+'">'+cheerFxHTML(i)+'</span>'+
       (p.bot?' <span class="mut">'+esc(BOTS[p.bot].title)+'</span>':'')+(MODE==='online'&&p.uid===UID?' <span class="mut">(আপনি)</span>':'')+(p.inJail?' 🔒':'')+(p.fc.length?' 🎫×'+p.fc.length:'')+
       '<div class="cash">'+money(cashV)+'</div><div class="chips">'+chips+'</div>'+talk+'</div>'+
       '<div class="pbtns">'+(p.out||isSelf(i)?'':'<button class="sm gold" onclick="G.cheer('+i+')" title="'+esc(p.name)+'-কে সমর্থন দিন">সমর্থন</button>')+

@@ -3,6 +3,7 @@ window.G={
   diceClick:function(){if(!S||anim||S.phase!=='roll'||!isMe(S.cur))return;ac();A(S.players[S.cur].inJail?'jailRoll':'roll');},
   hideCard:function(){cardUntil=0;render();},
   sound:soundModal,
+  chatToggle:function(){chatToggle();},chatTo:chatTo,chatReply:chatReply,chatSend:chatSend,vjoin:joinVoice,vleave:stopVoice,vmute:toggleMute,
   vol:function(v){setVol(v/100);},dvol:function(v){setDiceVol(v/100);try{tock(180,.7*DICEV);}catch(e){}},
   csnd:function(on){CHEERSND=!!on;lsSet('jm_cheersnd',on?'1':'0');},
   joinCode:function(){readName();var e=document.getElementById('jc');var c=((e&&e.value)||'').trim().toUpperCase();if(!c){toast('ঘরের কোড লিখুন');return;}joinRoom(c);},
