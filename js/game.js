@@ -39,7 +39,7 @@ function renderGame(){
   }
   var sayHTML='';
   if(sayActive()&&S.players[S.say.i])sayHTML='<div class="sayc">'+avatarOf(S.players[S.say.i],60)+'<span><b>'+esc(pname(S.say.i))+':</b> '+esc(S.say.t)+'</span></div>';
-  var center='<div class="center"><div class="deck ch">❓<br>ভাগ্য পরীক্ষা</div><div class="deck cc">📦<br>কমিউনিটি চেস্ট</div><div class="logo">ধনী হবার<br>মজার খেলা</div>'+
+  var center='<div class="center"><div class="deck ch">❓<br>ভাগ্য পরীক্ষা</div><div class="deck cc">📦<br>কমিউনিটি চেস্ট</div>'+logoHTML('bd')+''+
     '<div class="dice3'+(canRoll?' can':'')+'" id="dice" '+(canRoll?'onclick="G.diceClick()" title="ক্লিক করে ছক্কা চালুন"':'')+'>'+diceInner(faces)+'</div>'+
     (canRoll?'<div class="hint"> ছক্কায় ক্লিক করুন</div>':'')+
     '<div class="msg">'+esc(phaseMsg())+'</div>'+sayHTML+cardHTML+fxLayerHTML()[0]+'</div>';

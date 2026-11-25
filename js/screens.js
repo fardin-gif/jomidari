@@ -7,9 +7,14 @@ function render(){
   else if(scr==='lobby')renderLobby();
   else{renderGame();if(tradeDraft)renderTradeModal();}
 }
+// ধনী হবার মজার খেলা — লোগো (xl = হোম, sm = উপরের বার, bd = বোর্ডের মাঝে)
+function logoHTML(v){
+  if(v==='sm')return '<span class="lg lg-sm"><span class="cn"></span><span class="dh">ধনী</span><span class="hb2">হবার মজার খেলা</span></span>';
+  return '<div class="lg lg-'+v+'" role="img" aria-label="ধনী হবার মজার খেলা"><span class="l1"><span class="cn"></span><span class="dh">ধনী</span><span class="hb">হবার</span><span class="dc"></span></span><span class="rb">মজার খেলা</span></div>';
+}
 function topbar(){
   var inGame=scr==='game'||scr==='lobby';
-  return '<div class="top"><div class="brand" onclick="G.home()">🏰 ধনী হবার মজার খেলা</div><div class="row">'+
+  return '<div class="top"><div class="brand" onclick="G.home()">'+logoHTML('sm')+'</div><div class="row">'+
     (MODE==='online'&&CODE?'<span class="tag">ঘর: '+esc(CODE)+'</span>':(MODE==='local'&&scr==='game'?'<span class="tag">'+(setup.bots.length&&S&&S.players.some(function(p){return p.bot;})?'কম্পিউটারের সাথে':'একই ডিভাইস')+'</span>':''))+
     (LEVEL&&scr==='game'&&MODE==='local'?'<button class="sm alt" onclick="G.level()" title="স্তর বদলান">'+levelName(LEVEL)+'</button>':'')+
     '<button class="sm alt" onclick="G.sound()" title="সাউন্ড সেটিং">'+(muted?'🔇':'🔊')+'</button>'+
@@ -42,7 +47,7 @@ function renderHome(){
   var online=DB&&UID;
   var h=topbar()+'<div class="wrapc">';
   h+='<div class="hero"><span class="floaty" style="left:6%;top:30px">🪙</span><span class="floaty" style="right:7%;top:50px;animation-delay:1s">🏠</span><span class="floaty" style="left:14%;top:150px;animation-delay:2s">🎲</span><span class="floaty" style="right:14%;top:170px;animation-delay:1.5s">🏨</span>'+
-    '<div class="logo2">ধনী হবার মজার খেলা</div><div class="en">DHONI HOBAR MOJAR KHELA</div>'+
+    ''+logoHTML('xl')+''+
     '<p>জমি কিনুন, ভাড়া আদায় করুন, দালানকোঠা তুলুন — আর হয়ে উঠুন গ্রামবাংলার সেরা <b>জমিদার</b>! </p>'+
     '<div class="namebox"><button class="avpick" onclick="G.avModal()" title="অবতার বদলান">'+avatar(MYAV,64)+'</button><input id="nm" placeholder="আপনার নাম লিখুন" maxlength="14" value="'+esc(NAME)+'" oninput="NAME=this.value"></div>'+
     '</div>';
