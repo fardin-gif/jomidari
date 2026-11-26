@@ -1,0 +1,14 @@
+{
+  "name": "ধনী হবার মজার খেলা",
+  "short_name": "ধনী হবার খেলা",
+  "description": "বাংলায় অনলাইন বোর্ড গেম",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f5b3a",
+  "theme_color": "#0f5b3a",
+  "icons": [
+    { "src": "/assets/app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

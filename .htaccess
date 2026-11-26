@@ -1,3 +1,5 @@
 # Hostinger / Apache: /r/ABCD লিংক index.html-এ পাঠায়
 RewriteEngine On
 RewriteRule ^r/[A-Za-z0-9]+/?$ /index.html [L]
+
+AddType application/manifest+json .webmanifest

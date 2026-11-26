@@ -2,6 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Room-slot counter (free-tier protection): meta/live = {rooms:{CODE:{...}}, day, g}
+    // Hard server-side ceilings (client limits are lower): max 10 running rooms, max 40 games/day.
+    match /meta/live {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['rooms','day','g'])
+                    && request.resource.data.rooms.size() <= 10
+                    && request.resource.data.g is int && request.resource.data.g <= 40;
+    }
+
     // One document per game room: games/{CODE}
     match /games/{code} {
       allow read: if request.auth != null;
