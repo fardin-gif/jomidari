@@ -451,3 +451,25 @@ body.myturn-on::after{content:'';position:fixed;inset:0;pointer-events:none;z-in
 .lg-sm .hb2{color:#fff6d6;text-shadow:0 .08em 0 #0007;font-size:.92em;white-space:nowrap}
 @media(max-width:560px){.lg-sm{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.lg-xl,.lg-xl .cn{animation:none}}
+
+/* ===== লোগো ছবি (assets/logo-horizontal.png) ===== */
+.lgimg{display:block;height:auto;max-width:100%;user-select:none}
+.lgimg-xl{width:min(520px,88%);margin:10px auto 16px;animation:lgbob 4.5s ease-in-out infinite}
+.lgimg-sm{height:38px;width:auto}
+.lgimg-bd{width:62%;margin:-.4cqw auto 0;filter:drop-shadow(0 2px 3px #0005)}
+/* ===== চলমান খেলা / রুম স্লট ===== */
+.live .slots{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0}
+.live .slots .dot{width:14px;height:14px;border-radius:50%;background:#0002;border:2px solid var(--ink);display:inline-block}
+.live .slots .dot.on{background:#e63946}
+.live .slots span{font-weight:700;margin-left:6px}
+.lnote{background:#fff7d6;border:2px dashed #d4a017;border-radius:12px;padding:8px 12px;margin:6px 0;font-size:14px}
+.lnote.warn{background:#ffe8e0;border-color:#e63946}
+.lrooms{display:grid;gap:8px;margin-top:8px}
+.lr{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:2.5px solid var(--ink);border-radius:14px;padding:8px 12px;box-shadow:0 3px 0 var(--ink)}
+.lr .lri{display:flex;flex-direction:column;text-align:left}
+.pubpick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.pubpick button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 10px;background:#fff;color:var(--ink);text-align:center;line-height:1.35}
+.pubpick .e{font-size:34px}
+.pubpick small{font-weight:500;font-size:12.5px;opacity:.8}
+.admit .pl{display:flex;align-items:center;gap:8px;margin:6px 0}
+@media(max-width:480px){.pubpick{grid-template-columns:1fr}}
