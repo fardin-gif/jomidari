@@ -28,7 +28,7 @@ BOTS.shefali={name:'শেফালি বিবি',title:'গ্রামে�
 BOTS.tuhin={name:'তুহিন ভাই',title:'প্রযুক্তি-পাগল তরুণ',reserve:60,bidK:1.15,build:.6,blurb:'হিসেব কষে ঝুঁকি নেন; নিলামে হঠাৎ চাল দিয়ে চমকে দেন।',
   say:{roll:['অ্যালগরিদম বলছে ভালো দান!','রোল করছি, অপেক্ষা করুন।'],buy:['ইনভেস্টমেন্ট করে ফেললাম!','দারুণ লোকেশন!'],bid:['বিড বাড়ালাম!','এই দামেও লাভ আছে।'],pass:['রিটার্ন কম, পাস।'],build:['আপগ্রেড টাইম!'],pay:['ফি দিলাম, ঠিক আছে।'],jail:['সার্ভার ডাউন!'],win:['গেম ওভার — আমি জিতলাম!'],lose:['আবার রিম্যাচ চাই!']}};
 var BOT_ORDER=['majumdar','rahima','fotik','kanai','nazma','shefali','tuhin'];
-var HUMAN_AV=['h1','h2','h3','h4','h5','h6','h7','h8'];
+var HUMAN_AV=['h1','h2','h3','h4','h5','h6','h7','h8','h9','h10'];
 
 // ---- অবতারের বিবরণ ----
 var AVD={
@@ -46,7 +46,9 @@ var AVD={
   h5:{bg:'#fdffb6',skin:'#e0ac69',cloth:'#8e44ad',hair:'#3b2a20',hairStyle:'short',glasses:'#333'},
   h6:{bg:'#a0c4ff',skin:'#f0c8a0',cloth:'#00a8a8',hair:'#8a4b24',hairStyle:'spiky',cap:'#fff'},
   h7:{bg:'#ffadad',skin:'#b97a4a',cloth:'#ff6fb5',hair:'#222',hairStyle:'long',earring:'#ffd54f'},
-  h8:{bg:'#d0f4de',skin:'#d9a066',cloth:'#37474f',hair:'#eee',hairStyle:'bald',mus:'#ddd',glasses:'#555'}
+  h8:{bg:'#d0f4de',skin:'#d9a066',cloth:'#37474f',hair:'#eee',hairStyle:'bald',mus:'#ddd',glasses:'#555'},
+  h9:{bg:'#e9d8fd',skin:'#f1c27d',cloth:'#9e9d24',hair:'#2b1b17',hairStyle:'curly',glasses:'#333'},
+  h10:{bg:'#ffe8d6',skin:'#c68642',cloth:'#ff7043',hair:'#111',hairStyle:'long',earring:'#ffd54f',bindi:'#c62828'}
 };
 function _hair(o){
   var h=o.hair||'#222',s='';

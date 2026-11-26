@@ -16,7 +16,13 @@ window.G={
   avModal:avModal,
   pickAv:function(k){MYAV=k;lsSet('jm_av',k);var n=document.getElementById('nm');if(n)NAME=n.value;if(!NAME&&document.getElementById('nm0')){var v=document.getElementById('nm0').value;nameModal();document.getElementById('nm0').value=v;}else avModal();},
   legal:legalModal,
-  create:function(){createRoom();},
+  createAsk:createModal,
+  create:function(pub){closeModal();createRoom(!!pub);},
+  setPub:function(v){ROOMPUB=!!v;if(HOST===UID&&DB&&CODE)DB.doc('games/'+CODE).update({pub:ROOMPUB}).catch(function(){});render();},
+  watch:function(c){readName();joinRoom(c);},
+  askJoin:askJoin,watchResume:watchResume,admitOk:admitOk,admitNo:admitNo,
+  slotWait:slotWait,slotCancel:function(){slotCancel();},
+  liveRefresh:function(){refreshLive(true);},
   cheer:sendCheer,
   saveName:function(){var e=document.getElementById('nm0');var v=e?(e.value||'').trim():'';if(!v){toast('আগে নাম লিখুন');return;}NAME=v;lsSet('jm_name',v);lsSet('jm_av',MYAV);modalEl.innerHTML='';render();if(JOINCODE&&DB&&scr==='join')joinRoom(JOINCODE);},
   rejoin:function(){readName();joinRoom(lsGet('jm_code'));},
@@ -52,7 +58,14 @@ document.addEventListener('click',function(){ac();});
   if(m){JOINCODE=m[1].toUpperCase();scr='join';}
   render();
   initNet();
-  setInterval(function(){if(scr==='game')botTick();},4000);
+  setInterval(function(){if(scr==='game'){admitTick();botTick();}},4000);
+  // লাইভ তালিকা: হোমে থাকলে ২ মিনিটে একবার; হার্টবিট: প্রতি LIM.hb মিনিটে (জিটারসহ)
+  setInterval(function(){if(scr==='home')refreshLive(false);},120000);
+  (function hb(){setTimeout(function(){liveBeat();hb();},LIM.hb*60000+Math.random()*20000);})();
+  setInterval(watchTick,15000);
+  document.addEventListener('visibilitychange',function(){if(document.hidden)setTimeout(watchTick,30000);else if(WATCH&&WATCHP&&scr==='game')watchResume();else if(scr==='home')refreshLive(false);});
+  // লোগো ছবি আছে কি না আগে দেখে নিই; থাকলে ছবি, না থাকলে CSS লোগো
+  var li=new Image();li.onload=function(){LOGOOK=true;if(scr!=='game')render();};li.onerror=function(){LOGOOK=false;};li.src='/assets/logo-horizontal.png';
   setInterval(tickClock,1000);
 })();
 

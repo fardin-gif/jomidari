@@ -35,3 +35,9 @@ function viewer(){
 }
 function levelName(l){return {new:'প্রথমবার ক্রেতা',ent:'উদ্যোক্তা',zam:'জমিদার'}[l]||'';}
 function shareLink(code){return location.origin+location.pathname.replace(/\/r\/[^/]*$/,'/').replace(/index\.html$/,'')+'?r='+code;}
+
+// ---- ফ্রি-টিয়ার সীমা (firebase-config.js-এ window.APP_LIMITS দিয়ে বদলানো যায়) ----
+var LIM={rooms:8,perDay:20,stale:12,watch:12,hb:4};
+(function(){var o=window.APP_LIMITS||{};for(var k in o)LIM[k]=o[k];})();
+var WATCH=false,WATCHP=false,WATCHT=0,GUN=null,PUNS=[],LIVE=null,LIVET=0,OKS=[],ROOMPUB=false,REQ=null,REQT=0,DENIED={},SLOTW=null,PRES_WIN=270000,LASTBEAT=0;
+setup.pub=false;

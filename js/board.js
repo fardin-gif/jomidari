@@ -16,11 +16,11 @@ function coneSVG(color,k){
   return '<svg viewBox="0 0 24 34"><defs><linearGradient id="cg'+k+'" x1="0" x2="1"><stop offset="0" stop-color="'+shade(color,-.45)+'"/><stop offset=".38" stop-color="'+shade(color,.45)+'"/><stop offset=".6" stop-color="'+color+'"/><stop offset="1" stop-color="'+shade(color,-.55)+'"/></linearGradient></defs>'+
   '<ellipse cx="12" cy="30.5" rx="10.5" ry="3.2" fill="#0006"/><path d="M12 1.5 L21.5 29 A9.5 3.6 0 0 1 2.5 29 Z" fill="url(#cg'+k+')" stroke="#0008" stroke-width=".7"/><ellipse cx="12" cy="29" rx="9.5" ry="3.4" fill="'+shade(color,-.35)+'" opacity=".9"/><ellipse cx="11" cy="6" rx="1.6" ry="2.4" fill="#fff" opacity=".65"/></svg>';
 }
-var OFFS=[[-1.5,-.4],[1.5,-.4],[-1.5,1.7],[1.5,1.7],[0,-1.6],[0,3],[-3.1,.7],[3.1,.7]];
+var OFFS=[[-1.5,-.4],[1.5,-.4],[-1.5,1.7],[1.5,1.7],[0,-1.6],[0,3],[-3.1,.7],[3.1,.7],[-3.1,2.7],[3.1,2.7]];
 function tokenXY(i){
   var pos=disp[i],rc=sqRC(pos),k=0;
   for(var j=0;j<i;j++)if(!S.players[j].out&&disp[j]===pos)k++;
-  var o=OFFS[k%8];
+  var o=OFFS[k%10];
   return [unitC(rc[1])/12*100+o[0], unitC(rc[0])/12*100+o[1]+1.8];
 }
 function tokensHTML(){
@@ -88,7 +88,7 @@ function confetti(n,loop,host){
 }
 function cashFloats(){
   if(!cashShown||cashShown.length!==S.players.length)cashShown=S.players.map(function(p){return p.cash;});
-  S.players.forEach(function(p,i){var d=p.cash-cashShown[i];cashShown[i]=p.cash;if(!d||p.out)return;var xy=cellXY(disp[i]);var o=OFFS[i%8];floatAt(xy[0]+o[0],xy[1]-1.5,(d>0?'+':'−')+'৳'+bn(Math.abs(d)),d>0?'g':'r');});
+  S.players.forEach(function(p,i){var d=p.cash-cashShown[i];cashShown[i]=p.cash;if(!d||p.out)return;var xy=cellXY(disp[i]);var o=OFFS[i%10];floatAt(xy[0]+o[0],xy[1]-1.5,(d>0?'+':'−')+'৳'+bn(Math.abs(d)),d>0?'g':'r');});
 }
 function playEvent(e){
   var P=function(i){return S.players[i];};
@@ -98,6 +98,7 @@ function playEvent(e){
     case 'sold':SFX.sold();banner('🔨','বিক্রি হলো!',SQ[e.idx].n+' → '+pname(e.i)+' • '+money(e.amt),'sold',2700);flashCell(e.idx,P(e.i)&&P(e.i).color);confetti(30);break;
     case 'unsold':SFX.unsold();break;
     case 'jail':SFX.jail();addFx({kind:'jail',lbl:'🚔 জেলে!',dur:2400});break;
+    case 'join':banner('🙋','নতুন খেলোয়াড়!',pname(e.i)+' যোগ দিল','sm',2200);break;
     case 'free':SFX.free();addFx({kind:'jail',out:true,lbl:'🔓 মুক্ত!',dur:1300});break;
     case 'buy':SFX.buy();flashCell(e.idx,P(e.i)&&P(e.i).color);{var c=cellXY(e.idx);floatAt(c[0],c[1]-2,pname(e.i),'n');}break;
     case 'pay':{

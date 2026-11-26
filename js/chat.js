@@ -27,7 +27,7 @@ function chatPeople(){
   var add=function(p){if(!p||!p.uid||p.uid===UID||seen[p.uid])return;seen[p.uid]=1;out.push(p);};
   lobbyPlayers.forEach(add);
   if(S)S.players.forEach(function(p){if(p.uid)add({uid:p.uid,name:p.name,av:p.av});});
-  var now=Date.now();PRES.forEach(function(p){if(now-(p.seen||0)<150000)add(p);});
+  var now=Date.now();PRES.forEach(function(p){if(now-(p.seen||0)<PRES_WIN)add(p);});
   return out;
 }
 function tfmt(t){var d=new Date(t);return pad2(d.getHours())+':'+pad2(d.getMinutes());}

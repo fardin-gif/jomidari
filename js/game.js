@@ -50,6 +50,7 @@ function renderGame(){
   drain();
   turnAlert();
   scheduleCleanup();
+  admitTick();
   botTick();
 }
 
@@ -63,8 +64,22 @@ function rollCard(){
   if(p.inJail)return '<div class="card rollcard on"><h3>ছক্কা</h3><button data-a="jailRoll" onclick="A(\'jailRoll\')">ডাবলসের চেষ্টা</button><button class="alt" data-a="payJail" onclick="A(\'payJail\')" '+(p.cash<50?'disabled':'')+'>৫০ টাকা দিন</button>'+(p.fc.length?'<button class="alt" data-a="useCard" onclick="A(\'useCard\')">মুক্তির কার্ড</button>':'')+'<small class="mut">স্পেস = চেষ্টা • চেষ্টা '+bn(p.jt)+'/৩</small></div>';
   return '<div class="card rollcard on"><h3>ছক্কা</h3><button class="big gold" data-a="roll" onclick="G.diceClick()">ছক্কা চালুন</button><small class="mut">কিবোর্ডে স্পেস / Enter / R</small></div>';
 }
+function admitInner(){
+  if(MODE!=='online'||!S||WATCH||HOST!==UID||S.phase==='over')return '';
+  var pend=pendingList();
+  var left=S.players.filter(function(p){return !p.out&&!p.fr;}).length;
+  if(!pend.length&&S.locked)return '';
+  var h='<div class="card admit"><h3>'+(S.locked?'🔒 ঘর বন্ধ':'🔓 নতুনদের জন্য খোলা')+'</h3>';
+  h+=S.locked?'':'<div class="mut">সবাই প্রথম চাল না দেওয়া পর্যন্ত ('+bn(left)+' জনের বাকি) নতুন খেলোয়াড় যোগ হতে পারবে।</div>';
+  pend.forEach(function(p){
+    var ok=OKS.indexOf(p.uid)>=0;
+    h+='<div class="pl"><div class="avw">'+avatar(p.av||'h1',34)+'</div><span class="nmx">'+esc(p.name)+'</span>'+
+      (ok?' <span class="mut">যোগ হচ্ছে…</span>':(S.locked||S.players.length>=MAXP?' <span class="mut">ঘর বন্ধ</span>':' <button class="sm" onclick="G.admitOk(\''+p.uid+'\')">নিন</button> <button class="sm warn" onclick="G.admitNo(\''+p.uid+'\')">না</button>'))+'</div>';
+  });
+  return h+'</div>';
+}
 function panelLeft(){
-  var h=propsCard();
+  var h='<div id="admitbox">'+admitInner()+'</div>'+propsCard();
   var lg=S.log.slice(0,HOLD?logHold:S.log.length).slice(-16).reverse();
   h+='<div class="card"><h3>খেলার লগ</h3><div class="log2">'+lg.map(function(l){return '<div>'+esc(l)+'</div>';}).join('')+'</div><div class="mut" style="margin-top:4px">ব্যাংকে বাড়ি: '+bn(S.houses)+' • হোটেল: '+bn(S.hotels)+'</div></div>';
   if(MODE==='online')h+='<div class="card" id="presbox">'+presHTML()+'</div>';
@@ -110,7 +125,15 @@ function actionCard(){
   var h='<div class="card'+(yt?' yourturn':'')+'"><h3>'+(yt?'আপনার পালা — এখনই কাজ করুন':'আপনার কাজ')+'</h3>';
   if(HOLD&&s.phase!=='over')return h+'<div class="mut">ঘুঁটি চলছে… চাল শেষ হলে হিসাব দেখানো হবে।</div></div>';
   var spectator=(MODE==='online'&&myIdx()<0);
-  if(spectator)return h+'<div class="mut"> আপনি দর্শক — খেলা দেখছেন।</div></div>';
+  if(spectator){
+    var sb='';
+    if(WATCHP)sb='<div class="mut">⏸️ ডেটা বাঁচাতে লাইভ দেখা থেমে আছে।</div><div class="acts"><button onclick="G.watchResume()">▶ চালিয়ে দেখুন</button></div>';
+    else sb='<div class="mut">👁️ আপনি দর্শক — খেলা দেখছেন। (ট্যাব লুকালে বা ~'+bn(LIM.watch)+' মিনিট পরে নিজে থেকে থামবে)</div>';
+    if(!s.locked&&s.players.length<MAXP){
+      sb+=REQ==='p'?'<div class="mut" style="margin-top:6px">⏳ হোস্টের উত্তরের অপেক্ষা…</div>':'<div class="acts"><button class="gold" onclick="G.askJoin()">🙋 খেলায় যোগ দিতে চাই</button></div><div class="mut">সবার প্রথম চাল শেষ হওয়া পর্যন্ত অনুরোধ করা যায়।</div>';
+    }else sb+='<div class="mut" style="margin-top:6px">🔒 খেলা এগিয়ে গেছে — নতুন কেউ ঢুকতে পারবে না।</div>';
+    return h+sb+'</div>';
+  }
   if(s.phase==='over'){return h+'<b>🏆 '+esc(s.players[s.winner].name)+' জয়ী! অভিনন্দন!</b>'+(s.timeUp?'<div class="mut" style="margin-top:4px">সময় শেষ হয়েছে — মোট সম্পদে সেরা।</div>'+scoreHTML().replace('class="sc"','class="sc inl"'):'')+'<div class="acts"><button onclick="G.leave()">Home-এ ফিরুন</button></div></div>';}
   var wait=function(t){return '<div class="mut">'+(p.bot?' ':'')+esc(t)+'</div>';};
   if(s.phase==='roll'){

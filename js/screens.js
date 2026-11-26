@@ -8,7 +8,12 @@ function render(){
   else{renderGame();if(tradeDraft)renderTradeModal();}
 }
 // ধনী হবার মজার খেলা — লোগো (xl = হোম, sm = উপরের বার, bd = বোর্ডের মাঝে)
+var LOGOOK=null;
 function logoHTML(v){
+  if(LOGOOK===true)return '<img class="lgimg lgimg-'+v+'" src="/assets/logo-horizontal.png" alt="ধনী হবার মজার খেলা" draggable="false">';
+  return logoCSS(v);
+}
+function logoCSS(v){
   if(v==='sm')return '<span class="lg lg-sm"><span class="cn"></span><span class="dh">ধনী</span><span class="hb2">হবার মজার খেলা</span></span>';
   return '<div class="lg lg-'+v+'" role="img" aria-label="ধনী হবার মজার খেলা"><span class="l1"><span class="cn"></span><span class="dh">ধনী</span><span class="hb">হবার</span><span class="dc"></span></span><span class="rb">মজার খেলা</span></div>';
 }
@@ -18,7 +23,7 @@ function topbar(){
     (MODE==='online'&&CODE?'<span class="tag">ঘর: '+esc(CODE)+'</span>':(MODE==='local'&&scr==='game'?'<span class="tag">'+(setup.bots.length&&S&&S.players.some(function(p){return p.bot;})?'কম্পিউটারের সাথে':'একই ডিভাইস')+'</span>':''))+
     (LEVEL&&scr==='game'&&MODE==='local'?'<button class="sm alt" onclick="G.level()" title="স্তর বদলান">'+levelName(LEVEL)+'</button>':'')+
     '<button class="sm alt" onclick="G.sound()" title="সাউন্ড সেটিং">'+(muted?'🔇':'🔊')+'</button>'+
-    (inGame?'<button class="sm alt" onclick="G.leave()">Home</button>':'')+'</div></div>';
+    (WATCH&&scr==='game'?'<span class="tag">👁️ দর্শক</span>':'')+(inGame?'<button class="sm alt" onclick="G.leave()">Home</button>':'')+'</div></div>';
 }
 function avPicker(){
   return '<div class="avgrid">'+HUMAN_AV.map(function(k){return '<button class="'+(k===MYAV?'on':'')+'" onclick="G.pickAv(\''+k+'\')" title="অবতার">'+avatar(k,52)+'</button>';}).join('')+'</div>';
@@ -53,10 +58,11 @@ function renderHome(){
     '</div>';
   h+='<div class="modes">'+
    '<div class="mode c1"><div class="ic">🧑‍🤝‍🧑</div><h3>বন্ধুদের সাথে অনলাইনে</h3><p>ঘর বানিয়ে লিংক পাঠান। যে যার ফোন/কম্পিউটারে খেলুন — কোড লাগবে না!</p>'+
-     (online?'<button class="big" onclick="G.create()">ঘর বানান </button>'+(saved?'<button class="alt sm" onclick="G.rejoin()">আগের ঘরে ফিরুন ('+esc(saved)+')</button>':'')+'<div class="mut" style="margin-top:10px">কোড দিয়ে যোগ দিন</div><div class="codejoin" style="margin-top:4px"><input id="jc" placeholder="ঘরের কোড" maxlength="8" onkeydown="if(event.key===\'Enter\')G.joinCode()"><button class="sm" onclick="G.joinCode()">যোগ দিন</button></div>':'<div class="mut">'+esc(dbMsg||'অনলাইন সংযোগ প্রস্তুত হচ্ছে…')+'</div>')+'</div>'+
+     (online?'<button class="big" onclick="G.createAsk()">ঘর বানান </button>'+(saved?'<button class="alt sm" onclick="G.rejoin()">আগের ঘরে ফিরুন ('+esc(saved)+')</button>':'')+'<div class="mut" style="margin-top:10px">কোড দিয়ে যোগ দিন</div><div class="codejoin" style="margin-top:4px"><input id="jc" placeholder="ঘরের কোড" maxlength="8" onkeydown="if(event.key===\'Enter\')G.joinCode()"><button class="sm" onclick="G.joinCode()">যোগ দিন</button></div>':'<div class="mut">'+esc(dbMsg||'অনলাইন সংযোগ প্রস্তুত হচ্ছে…')+'</div>')+'</div>'+
    '<div class="mode c2"><div class="ic">🤖</div><h3>কম্পিউটারের সাথে</h3><p>মজুমদার সাহেব ও তাঁর বন্ধুদের হারাতে পারবেন? একাই খেলুন, যেকোনো সময়।</p><button class="big gold" onclick="G.vsCom()">খেলুন </button></div>'+
    '<div class="mode c3"><div class="ic">📱</div><h3>একই ডিভাইসে</h3><p>একটাই ফোন বা ল্যাপটপ — পালা করে খেলুন, পরিবারের সবাই মিলে।</p><button class="big alt" onclick="G.hot()">শুরু করুন</button></div>'+
   '</div>';
+  h+=liveBoxHTML();
   h+='<div class="sec"><h2>৬০ সেকেন্ডে শিখে নিন</h2><div class="sub">চারটা ধাপেই খেলা বোঝা শেষ!</div><div class="steps">'+
    '<div class="step"><span class="n">১</span><div class="e">🎲</div><b>ছক্কা চালুন</b><span>বোর্ডের ছক্কায় ক্লিক করুন, ঘুঁটি এগোবে</span></div>'+
    '<div class="step"><span class="n">২</span><div class="e">🏷️</div><b>জায়গা কিনুন</b><span>খালি জায়গা পেলে কিনুন, নইলে নিলাম</span></div>'+
@@ -107,7 +113,7 @@ function renderSetup(){
 // ---------- একই ডিভাইস ----------
 var hotNames=[];
 function renderHot(){
-  var n=setup.hot,h=topbar()+'<div class="wrapc" style="max-width:640px"><div class="card" style="margin-top:16px"><h2>একই ডিভাইসে পালা করে</h2><div class="row" style="margin:10px 0">কতজন খেলবেন? <div class="seg">'+[2,3,4,5,6,7,8].map(function(k){return '<button class="'+(k===n?'on':'')+'" onclick="G.hotN('+k+')">'+bn(k)+'</button>';}).join('')+'</div></div><div id="locnames">';
+  var n=setup.hot,h=topbar()+'<div class="wrapc" style="max-width:640px"><div class="card" style="margin-top:16px"><h2>একই ডিভাইসে পালা করে</h2><div class="row" style="margin:10px 0">কতজন খেলবেন? <div class="seg">'+[2,3,4,5,6,7,8,9,10].map(function(k){return '<button class="'+(k===n?'on':'')+'" onclick="G.hotN('+k+')">'+bn(k)+'</button>';}).join('')+'</div></div><div id="locnames">';
   for(var i=0;i<n;i++)h+='<div class="row" style="margin:6px 0">'+avatar(HUMAN_AV[i],40)+'<input class="ln" maxlength="14" placeholder="খেলোয়াড় '+bn(i+1)+'" value="'+esc(hotNames[i]||'')+'" oninput="hotNames['+i+']=this.value"></div>';
   h+='</div><h3 style="margin-top:12px">খেলা কতক্ষণ চলবে?</h3>'+limitPicker()+'<div class="acts"><button class="alt" onclick="G.home()">ফিরে যান</button><button class="big gold" onclick="G.startHot()">খেলা শুরু </button></div></div></div>';
   app.innerHTML=h;
@@ -134,14 +140,17 @@ function renderLobby(){
   '<p>এই লিংকটি বন্ধুদের পাঠান — লিংকে ঢুকে নাম দিলেই তারা যোগ দিতে পারবে। চাইলে কোডটি (<b>'+esc(CODE)+'</b>) বললেও হবে — হোম পেজে "কোড দিয়ে যোগ দিন"-এ লিখলেই ঢুকবে।</p>'+
   '<div class="linkbox"><code id="lnk">'+esc(link)+'</code><button class="sm" onclick="G.copy()">কপি</button>'+(navigator.share?'<button class="sm gold" onclick="G.share()">শেয়ার</button>':'')+'<a href="https://wa.me/?text='+encodeURIComponent('ধনী হবার মজার খেলা খেলতে আসুন!  '+link)+'" target="_blank" rel="noopener"><button class="sm" style="background:#25d366">WhatsApp</button></a></div>'+
   '<div style="margin-top:12px">'+voiceCardHTML()+'</div>'+
-  '<h3 style="margin-top:14px">খেলোয়াড় ('+bn(cnt)+'/৮)</h3>'+
-  lobbyPlayers.map(function(p,i){return '<div class="pl"><div class="avw">'+avatar(p.av||'h1',44)+'<span class="dot" style="background:'+COLORS[i%8]+'"></span></div><span class="nmx">'+esc(p.name)+'</span>'+(p.uid===HOST?' <span class="mut">(হোস্ট)</span>':'')+(p.uid===UID?' <span class="mut">(আপনি)</span>':'')+'</div>';}).join('')+
-  lobbyBots.map(function(k,j){var b=BOTS[k];return '<div class="pl"><div class="avw">'+avatar(k,44)+'<span class="dot" style="background:'+COLORS[(lobbyPlayers.length+j)%8]+'"></span></div><span class="nmx">'+b.name+'</span> <span class="mut">(কম্পিউটার)</span>'+(host?' <button class="sm warn" onclick="G.rmBot(\''+k+'\')">সরান</button>':'')+'</div>';}).join('');
+  '<h3 style="margin-top:14px">খেলোয়াড় ('+bn(cnt)+'/'+bn(MAXP)+')</h3>'+
+  lobbyPlayers.map(function(p,i){return '<div class="pl"><div class="avw">'+avatar(p.av||'h1',44)+'<span class="dot" style="background:'+COLORS[i%10]+'"></span></div><span class="nmx">'+esc(p.name)+'</span>'+(p.uid===HOST?' <span class="mut">(হোস্ট)</span>':'')+(p.uid===UID?' <span class="mut">(আপনি)</span>':'')+'</div>';}).join('')+
+  lobbyBots.map(function(k,j){var b=BOTS[k];return '<div class="pl"><div class="avw">'+avatar(k,44)+'<span class="dot" style="background:'+COLORS[(lobbyPlayers.length+j)%10]+'"></span></div><span class="nmx">'+b.name+'</span> <span class="mut">(কম্পিউটার)</span>'+(host?' <button class="sm warn" onclick="G.rmBot(\''+k+'\')">সরান</button>':'')+'</div>';}).join('');
   if(host){
-    h+='<hr class="hr"><h3>কম্পিউটার চরিত্র যোগ করুন <span class="mut">(ইচ্ছা হলে)</span></h3><div class="row">'+BOT_ORDER.filter(function(k){return lobbyBots.indexOf(k)<0;}).map(function(k){return '<button class="sm alt" onclick="G.addBot(\''+k+'\')">'+avatar(k,26)+' '+BOTS[k].name+'</button>';}).join('')+'</div>'+
+    h+='<hr class="hr"><h3>ঘরের ধরন</h3><div class="seg"><button class="'+(!ROOMPUB?'on':'')+'" onclick="G.setPub(false)">🔒 প্রাইভেট</button><button class="'+(ROOMPUB?'on':'')+'" onclick="G.setPub(true)">🌐 পাবলিক</button></div>';
+    h+='<h3 style="margin-top:12px">কম্পিউটার চরিত্র যোগ করুন <span class="mut">(ইচ্ছা হলে)</span></h3><div class="row">'+BOT_ORDER.filter(function(k){return lobbyBots.indexOf(k)<0;}).map(function(k){return '<button class="sm alt" onclick="G.addBot(\''+k+'\')">'+avatar(k,26)+' '+BOTS[k].name+'</button>';}).join('')+'</div>'+
     '<h3 style="margin-top:12px">কম্পিউটার কত চালাক?</h3><div class="seg">'+[['easy',' সহজ'],['med',' মাঝারি'],['hard',' কঠিন']].map(function(d){return '<button class="'+(setup.diff===d[0]?'on':'')+'" onclick="G.setDiff(\''+d[0]+'\')">'+d[1]+'</button>';}).join('')+'</div>';
     h+='<h3 style="margin-top:12px">খেলা কতক্ষণ চলবে?</h3>'+limitPicker();
   }else h+='<hr class="hr"><div><b>খেলার সময়:</b> '+limitText(lobbyLimit)+'</div>';
+  if(host&&SLOTW)h+='<div class="lnote warn" style="margin-top:12px">⏳ সব রুম ব্যস্ত — রুম খালি হলেই খেলা নিজে থেকে শুরু হবে। লবিতেই থাকুন। <button class="sm alt" onclick="G.slotCancel()">বাতিল</button></div>';
+  else if(host&&LIVE&&LIVE.n>=LIM.rooms)h+='<div class="lnote warn" style="margin-top:12px">এখন সব রুম ব্যস্ত ('+bn(LIVE.n)+'/'+bn(LIM.rooms)+') — "শুরু করুন" চাপলে অপেক্ষার সুযোগ পাবেন।</div>';
   h+='<div class="acts">'+(host?'<button class="big gold" onclick="G.start()" '+(cnt<2?'disabled':'')+'>খেলা শুরু করুন </button>':'<span class="mut"> হোস্ট খেলা শুরু করার অপেক্ষায়…</span>')+'<button class="alt" onclick="G.leave()">বের হন</button></div></div></div>';
   app.innerHTML=h;
 }
@@ -153,7 +162,7 @@ function nameModal(){
   setTimeout(function(){var e=document.getElementById('nm0');if(e)e.focus();},50);
 }
 function presHTML(){
-  var now=Date.now(),act=PRES.filter(function(p){return now-(p.seen||0)<150000;});
+  var now=Date.now(),act=PRES.filter(function(p){return now-(p.seen||0)<PRES_WIN;});
   if(!act.length)return '';
   var pu={};if(S)S.players.forEach(function(p){if(p.uid)pu[p.uid]=1;});
   return '<h3>এখন লিংকে আছেন: '+bn(act.length)+' জন</h3><div class="pres">'+act.map(function(p){return '<span class="pchip">'+avatar(p.av||'h1',22)+esc(p.name)+(pu[p.uid]?'':' <small>(দর্শক)</small>')+'</span>';}).join('')+'</div>';
@@ -172,4 +181,29 @@ function soundModal(){
   '<label class="srow">ছক্কা ও ঘুঁটির ধুপধাপ <input type="range" min="0" max="100" value="'+pc(DICEV)+'" oninput="G.dvol(this.value)"></label>'+
   '<label class="srow">সমর্থনের টুংটাং <input type="checkbox" '+(CHEERSND?'checked':'')+' onchange="G.csnd(this.checked)"></label>'+
   '<div class="acts"><button class="alt" onclick="G.mute();G.sound()">'+(muted?'সব শব্দ চালু করুন':'সব শব্দ বন্ধ করুন')+'</button><button onclick="G.close()">ঠিক আছে</button></div></div></div>';
+}
+
+// ---------- চলমান খেলা (পাবলিক ঘরের তালিকা ও রুমের অবস্থা) ----------
+function liveBoxHTML(){
+  if(!DB||!UID)return '';
+  var L=LIVE;
+  if(!L)return '<div class="sec live" id="livebox"><h2>🔴 এখন চলছে</h2><div class="mut">লোড হচ্ছে…</div></div>';
+  var ks=Object.keys(L.rooms),full=L.n>=LIM.rooms,dayFull=L.g>=LIM.perDay,dots='';
+  for(var i=0;i<LIM.rooms;i++)dots+='<i class="dot'+(i<L.n?' on':'')+'"></i>';
+  var pubs=ks.filter(function(k){return L.rooms[k].pub;}).sort(function(a,b){return (L.rooms[b].st||0)-(L.rooms[a].st||0);});
+  var h='<div class="sec live" id="livebox"><h2>🔴 এখন চলছে</h2><div class="slots">'+dots+'<span>'+bn(L.n)+'/'+bn(LIM.rooms)+' রুম ব্যস্ত</span><button class="sm alt" onclick="G.liveRefresh()" title="আবার দেখুন">🔄</button></div>';
+  if(dayFull)h+='<div class="lnote warn">আজকের অনলাইন খেলার সীমা পূর্ণ — নতুন অনলাইন খেলা শুরু হবে না, তবে নিচের খেলা দেখতে পারেন। কম্পিউটারের সাথে খেলা চালু আছে।</div>';
+  else if(full)h+='<div class="lnote warn">এই মুহূর্তে সব রুম ব্যস্ত — নতুন খেলা শুরু করতে একটু অপেক্ষা করতে হতে পারে। ততক্ষণ চলমান খেলা দেখুন!</div>';
+  else h+='<div class="lnote">রুম খালি আছে — ঘর বানিয়ে বন্ধুদের ডাকুন।</div>';
+  if(pubs.length){
+    h+='<div class="lrooms">'+pubs.map(function(k){var r=L.rooms[k],m=Math.max(1,Math.round((Date.now()-(r.st||Date.now()))/60000));
+      return '<div class="lr"><div class="lri"><b>'+esc(r.h||'একটি ঘর')+'-এর ঘর</b><span class="mut">'+bn(r.n||0)+' জন খেলছে • '+bn(m)+' মিনিট আগে শুরু</span></div><button class="sm" onclick="G.watch(\''+k+'\')">👁️ দেখুন</button></div>';}).join('')+'</div>';
+  }else h+='<div class="mut" style="margin-top:6px">এখন কোনো পাবলিক খেলা চলছে না।</div>';
+  return h+'</div>';
+}
+function createModal(){
+  modalEl.innerHTML='<div class="modalbg" onclick="if(event.target===this)G.close()"><div class="modal" style="max-width:520px;text-align:center"><h2>কেমন ঘর বানাবেন?</h2><div class="pubpick">'+
+  '<button onclick="G.create(false)"><span class="e">🔒</span><b>প্রাইভেট</b><small>শুধু লিংক/কোড যাদের কাছে আছে তারাই ঢুকবে। তালিকায় দেখা যাবে না।</small></button>'+
+  '<button onclick="G.create(true)"><span class="e">🌐</span><b>পাবলিক</b><small>খেলা শুরু হলে সবাই তালিকায় দেখে দর্শক হতে পারবে (প্রথম চাল পর্যন্ত চাইলে যোগও দিতে পারবে)।</small></button></div>'+
+  '<div class="acts" style="justify-content:center"><button class="alt" onclick="G.close()">থাক</button></div></div></div>';
 }

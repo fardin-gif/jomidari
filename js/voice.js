@@ -12,7 +12,7 @@ function startVoiceWatch(code){
   },function(){}));
 }
 function stopVoiceWatch(){VUN.forEach(function(f){try{f();}catch(e){}});VUN=[];VOICE.members={};}
-function vGhost(u){var p=PRES.filter(function(x){return x.uid===u;})[0];return !!p&&Date.now()-(p.seen||0)>=150000;}
+function vGhost(u){var p=PRES.filter(function(x){return x.uid===u;})[0];return !!p&&Date.now()-(p.seen||0)>=PRES_WIN;}
 function vActive(){return Object.keys(VOICE.members).filter(function(u){return !vGhost(u);}).map(function(u){return VOICE.members[u];});}
 function vBefore(m){return m.t<VOICE.myT||(m.t===VOICE.myT&&m.uid<UID);}
 // কলে থাকা অন্যদের সাথে মিলিয়ে সংযোগ খোলা/বন্ধ করা
@@ -135,7 +135,7 @@ function voiceInner(){
   if(VOICE.on&&Object.keys(VOICE.state).some(function(u){return VOICE.state[u]==='failed';}))h+='<div class="mut" style="font-size:12px;margin-top:6px">কারও সাথে সংযোগ না হলে নেটওয়ার্ক বদলে (ওয়াইফাই/মোবাইল ডেটা) আবার কলে যোগ দিন।</div>';
   return h;
 }
-function voiceCardHTML(){return MODE==='online'?'<div class="card" id="voicebox">'+voiceInner()+'</div>':'';}
+function voiceCardHTML(){return MODE==='online'&&!WATCH?'<div class="card" id="voicebox">'+voiceInner()+'</div>':'';}
 function voiceUI(){var el=document.getElementById('voicebox');if(el)el.innerHTML=voiceInner();}
 document.addEventListener('click',function(){Object.keys(VOICE.auds).forEach(function(u){var a=VOICE.auds[u];if(a&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){});}});if(VCTX&&VCTX.state==='suspended')VCTX.resume();});
 window.addEventListener('beforeunload',function(){if(VOICE.on&&DB&&CODE){try{DB.doc('games/'+CODE+'/voice/'+UID).del();}catch(e){}}});

@@ -1,5 +1,6 @@
 // ====== জমিদার — গেম ইঞ্জিন (pure logic) ======
-var COLORS=['#e63946','#1d7bd8','#2a9d4a','#f4a300','#8e44ad','#00a8a8','#ff6fb5','#5d4037'];
+var COLORS=['#e63946','#1d7bd8','#2a9d4a','#f4a300','#8e44ad','#00a8a8','#ff6fb5','#5d4037','#9e9d24','#ff7043'];
+var MAXP=10;
 var GROUPS={brown:['#8b5a3c','বাদামি'],lblue:['#8fd3f4','আকাশি'],pink:['#e66fb0','গোলাপি'],orange:['#f39a2b','কমলা'],red:['#d93636','লাল'],yellow:['#f3d52b','হলুদ'],green:['#2e9d4f','সবুজ'],dblue:['#2b4cb3','গাঢ় নীল']};
 var SQ=(function(){
   var P=function(n,g,p,h,r){return {t:'prop',n:n,g:g,p:p,h:h,r:r};};
@@ -87,9 +88,9 @@ function glog(s,m){s.log.push(m);if(s.log.length>80)s.log.shift();}
 function alive(s){var r=[];s.players.forEach(function(p,i){if(!p.out)r.push(i);});return r;}
 
 function newGame(list){
-  var s={v:1,players:list.map(function(p,i){return {uid:p.uid||null,bot:p.bot||null,av:p.av||null,name:p.name,color:COLORS[i%COLORS.length],pos:0,cash:1500,inJail:false,jt:0,fc:[],out:false};}),
+  var s={v:1,players:list.map(function(p,i){return {uid:p.uid||null,bot:p.bot||null,av:p.av||null,name:p.name,color:COLORS[i%COLORS.length],pos:0,cash:1500,inJail:false,jt:0,fc:[],out:false,fr:false};}),
     own:{},cur:0,phase:'roll',dice:[0,0],dc:0,again:false,houses:32,hotels:12,log:[],debt:null,auction:null,trade:null,tradePrev:null,
-    ch:shuffle(CHD.map(function(_,i){return i;})),cc:shuffle(CCD.map(function(_,i){return i;})),winner:null,lastCard:null,dbl:false,rollId:0,ev:[],say:null,limit:0,endAt:0,timeUp:false,scores:null};
+    ch:shuffle(CHD.map(function(_,i){return i;})),cc:shuffle(CCD.map(function(_,i){return i;})),winner:null,lastCard:null,dbl:false,rollId:0,locked:false,ev:[],say:null,limit:0,endAt:0,timeUp:false,scores:null};
   // প্রথম দান: সবাই ছক্কা চালে, সর্বোচ্চ যোগফল শুরু করে
   var cand=s.players.map(function(_,i){return i;});
   while(cand.length>1){
@@ -227,9 +228,17 @@ function run(s,who,a){
     if(ph!=='roll')return 'এই দান শেষ হলে খেলা থামবে';
     var sc=scoreList(s);s.scores=sc;s.timeUp=true;s.phase='over';s.winner=sc[0].i;s.debt=null;s.auction=null;s.trade=null;
     glog(s,'সময় শেষ! সম্পদে সেরা: '+pl(s,sc[0].i).name+' (৳'+bn(sc[0].net)+')');ev(s,{k:'win',i:sc[0].i});break;}
+  case 'admit':{
+    if(s.locked)return 'খেলা এগিয়ে গেছে — আর কেউ যোগ হতে পারবে না';
+    if(ph!=='roll'&&ph!=='post')return 'এখন যোগ করা যাবে না';
+    if(s.players.length>=MAXP)return 'ঘর পূর্ণ (সর্বোচ্চ '+bn(MAXP)+' জন)';
+    if(a.uid&&s.players.some(function(q){return q.uid===a.uid;}))return 'আগেই আছেন';
+    var ni=s.players.length;
+    s.players.push({uid:a.uid||null,bot:null,av:a.av||null,name:String(a.name||'খেলোয়াড়').slice(0,14),color:COLORS[ni%COLORS.length],pos:0,cash:1500,inJail:false,jt:0,fc:[],out:false,fr:false});
+    glog(s,s.players[ni].name+' খেলায় যোগ দিল');ev(s,{k:'join',i:ni});break;}
   case 'roll':{
     if(who!==cur||ph!=='roll'||p.inJail)return 'এখন ছক্কা চালানো যাবে না';
-    var d1=rnd(6)+1,d2=rnd(6)+1;s.dice=[d1,d2];s.rollId++;
+    p.fr=true;var d1=rnd(6)+1,d2=rnd(6)+1;s.dice=[d1,d2];s.rollId++;
     var dbl=d1===d2;s.dc=dbl?s.dc+1:0;if(dbl)ev(s,{k:'doubles',i:cur});
     glog(s,p.name+' ছক্কা চালল: '+bn(d1)+' + '+bn(d2)+' = '+bn(d1+d2)+(dbl?' (ডাবলস!)':''));
     if(s.dc===3){glog(s,'পরপর ৩ বার ডাবলস!');goJail(s,cur);break;}
@@ -244,7 +253,7 @@ function run(s,who,a){
     var f=p.fc.pop();s[f[0]].push(f[1]);p.inJail=false;p.jt=0;ev(s,{k:'free',i:cur});glog(s,p.name+' মুক্তির কার্ড ব্যবহার করল');break;
   case 'jailRoll':{
     if(who!==cur||ph!=='roll'||!p.inJail)return 'সম্ভব নয়';
-    var e1=rnd(6)+1,e2=rnd(6)+1;s.dice=[e1,e2];s.rollId++;
+    p.fr=true;var e1=rnd(6)+1,e2=rnd(6)+1;s.dice=[e1,e2];s.rollId++;
     glog(s,p.name+' জেল থেকে বেরোতে ছক্কা চালল: '+bn(e1)+' + '+bn(e2));
     if(e1===e2){p.inJail=false;p.jt=0;s.again=false;ev(s,{k:'free',i:cur});glog(s,'ডাবলস! মুক্তি');stepMove(s,cur,e1+e2);}
     else{p.jt++;
@@ -386,6 +395,7 @@ function apply(s0,who,a){
     s.endAt=Date.now()+s.limit*60000;ev(s,{k:'clock',min:s.limit});
     glog(s,'সব সম্পত্তি বিক্রি হয়েছে! এখন ঘড়ি চালু — '+bn(s.limit)+' মিনিট বাকি।');
   }
+  s.locked=s.players.every(function(q){return q.out||q.fr;});
   s.v=(s0.v||0)+1;
   return {s:s};
 }
